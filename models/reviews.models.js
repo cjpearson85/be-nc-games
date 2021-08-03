@@ -16,5 +16,16 @@ exports.selectReviewById = async (review_id) => {
 };
 
 exports.updateReviewById = async (review_id, body) => {
-    
-}
+  const { rows } = await db.query(
+    `UPDATE reviews
+    SET votes = votes + $1
+    WHERE review_id = $2
+    RETURNING *`,
+    [body.inc_votes, review_id]
+  );
+  if (!rows[0]) {
+    return Promise.reject({ status: 404, message: "Review does not exist" });
+  }
+  return rows[0];
+  // Update this to make sure votes doesn't become a negative number
+};

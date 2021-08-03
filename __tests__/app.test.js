@@ -35,33 +35,62 @@ describe("GET - /api/invalidpath", () => {
   });
 });
 
-describe('GET - /api/reviews/:review_id', () => {
-  test('should return a review object matching the review_id', async () => {
-    const {body: {review}} = await request(app).get('/api/reviews/2').expect(200);
+describe("GET - /api/reviews/:review_id", () => {
+  test("should return a review object matching the review_id", async () => {
+    const {
+      body: { review },
+    } = await request(app).get("/api/reviews/2").expect(200);
 
     const output = {
-      owner: 'philippaclaire9',
-      title: 'Jenga',
+      owner: "philippaclaire9",
+      title: "Jenga",
       review_id: 2,
-      review_body: 'Fiddly fun for all the family',
-      designer: 'Leslie Scott',
+      review_body: "Fiddly fun for all the family",
+      designer: "Leslie Scott",
       review_img_url:
-        'https://www.golenbock.com/wp-content/uploads/2015/01/placeholder-user.png',
-      category: 'dexterity',
-      created_at: '2021-01-18T10:01:41.251Z',
+        "https://www.golenbock.com/wp-content/uploads/2015/01/placeholder-user.png",
+      category: "dexterity",
+      created_at: "2021-01-18T10:01:41.251Z",
       votes: 5,
-      comment_count: '3'
-    }
+      comment_count: "3",
+    };
     expect(review).toEqual(output);
   });
-  test('should return a 400 if an passed an invalid review_id', async () => {
-    const {body: {message}} = await request(app).get('/api/reviews/not_an_id').expect(400);
+  test("should return a 400 if an passed an invalid review_id", async () => {
+    const {
+      body: { message },
+    } = await request(app).get("/api/reviews/not_an_id").expect(400);
 
     expect(message).toBe("Invalid review_id");
-  })
-  test('should return a 404 if an passed a valid review_id that doesn\'t exist in the database', async () => {
-    const {body: {message}} = await request(app).get('/api/reviews/100').expect(404);
+  });
+  test("should return a 404 if an passed a valid review_id that doesn't exist in the database", async () => {
+    const {
+      body: { message },
+    } = await request(app).get("/api/reviews/100").expect(404);
 
     expect(message).toBe("Review does not exist");
-  })
+  });
+});
+
+describe("PATCH - /api/reviews/:review_id", () => {
+  test("should update the votes field by the specified amount and return the amended review", async () => {
+    const {
+      body: { review },
+    } = await request(app)
+      .patch("/api/reviews/12")
+      .send({ inc_votes: -20 })
+      .expect(200);
+
+    expect(review.votes).toBe(80);
+  });
+  test("should ", async () => {
+    const {
+      body: { message },
+    } = await request(app)
+      .patch("/api/reviews/15")
+      .send({ inc_votes: 20 })
+      .expect(404);
+
+    expect(message).toBe("Review does not exist");
+  });
 });
