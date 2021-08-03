@@ -35,6 +35,45 @@ describe("GET - /api/invalidpath", () => {
   });
 });
 
+describe.only("GET - /api/reviews", () => {
+  test("should return an array of review objects, ordered by date descending by default", async () => {
+    const {
+      body: { reviews },
+    } = await request(app).get("/api/reviews").expect(200);
+
+    expect(Array.isArray(reviews)).toBe(true);
+    expect(reviews).toHaveLength(13);
+    reviews.forEach((review) => {
+      expect(review).toMatchObject({
+        owner: expect.any(String),
+        title: expect.any(String),
+        review_id: expect.any(Number),
+        category: expect.any(String),
+        review_img_url: expect.any(String),
+        created_at: expect.any(String),
+        votes: expect.any(Number),
+        comment_count: expect.any(String),
+      });
+    });
+    expect(reviews).toBeSortedBy("created_at", { descending: true });
+  });
+  test('should return an array of review objects, ordered by the specified parameters', async () => {
+    const {
+      body: { reviews },
+    } = await request(app).get("/api/reviews?sort_by=review_id&order=asc").expect(200);
+
+    expect(reviews).toBeSortedBy("review_id", { ascending: true });
+  });
+  test('should return an array of review objects, filtered by the specified category', async () => {
+    const {
+      body: { reviews },
+    } = await request(app).get("/api/reviews?category=dexterity").expect(200);
+
+    expect(reviews).toHaveLength(1);
+    expect(reviews[0].review_id).toBe(2);
+  });
+});
+
 describe("GET - /api/reviews/:review_id", () => {
   test("should return a review object matching the review_id", async () => {
     const {

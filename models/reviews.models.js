@@ -1,5 +1,42 @@
 const db = require("../db/connection.js");
 
+exports.selectReviews = async ({ sort_by, order, category }) => {
+  const validSortBy = [
+    "owner",
+    "title",
+    "review_id",
+    "category",
+    "review_img_url",
+    "created_at",
+    "votes",
+    "comment_count",
+  ];
+  const validOrder = ["asc", "desc"];
+
+  if (!validSortBy.includes(sort_by) || !validOrder.includes(order)) {
+    return Promise.reject({ status: 400, msg: "bad request" });
+  }
+
+  let queryValues = [];
+  let queryStr = `
+        SELECT owner, title, reviews.review_id, category,review_img_url, reviews.created_at, reviews.votes, COUNT(comment_id) AS comment_count
+        FROM reviews
+        LEFT JOIN comments ON reviews.review_id = comments.review_id`;
+
+  if (category) {
+      queryStr += ` WHERE category = $1`;
+      queryValues.push(category);
+  }
+
+  queryStr += ` 
+    GROUP BY reviews.review_id
+    ORDER BY ${sort_by} ${order};`
+
+  const { rows } = await db.query(queryStr, queryValues);
+
+  return rows;
+};
+
 exports.selectReviewById = async (review_id) => {
   const { rows } = await db.query(
     `SELECT owner, title, reviews.review_id, review_body, designer, review_img_url, category, reviews.created_at, reviews.votes, COUNT(comment_id) AS comment_count
