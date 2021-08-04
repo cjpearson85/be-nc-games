@@ -75,13 +75,3 @@ exports.updateReviewById = async (review_id, body) => {
   return rows[0];
   // Update this to make sure votes doesn't become a negative number
 };
-
-exports.selectCommentsByReviewId = async (review_id) => {
-  const { rows } = await db.query(
-    `SELECT comment_id, votes, created_at, author, body FROM comments 
-    WHERE review_id = $1;`,
-    [review_id]
-  );
-
-  return rows;
-};

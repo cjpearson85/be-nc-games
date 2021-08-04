@@ -88,7 +88,7 @@ describe("GET - /api/reviews", () => {
 
     expect(message).toBe("bad request");
   });
-  test('should return 404 if provided an category that doesn\'t exist in the database', async () => {
+  test("should return 404 if provided an category that doesn't exist in the database", async () => {
     const {
       body: { message },
     } = await request(app).get("/api/reviews?category=chance").expect(404);
@@ -157,36 +157,79 @@ describe("PATCH - /api/reviews/:review_id", () => {
   });
 });
 
-describe('GET - /api/reviews/:review_id/comments', () => {
-  test('should return an array of all the comments for a specific review', async () => {
-    const {body: {comments}} = await request(app).get('/api/reviews/2/comments').expect(200);
+describe("GET - /api/reviews/:review_id/comments", () => {
+  test("should return an array of all the comments for a specific review", async () => {
+    const {
+      body: { comments },
+    } = await request(app).get("/api/reviews/2/comments").expect(200);
 
     expect(Array.isArray(comments)).toBe(true);
     expect(comments).toHaveLength(3);
-    comments.forEach(comment => {
+    comments.forEach((comment) => {
       expect(comment).toMatchObject({
         comment_id: expect.any(Number),
         votes: expect.any(Number),
         created_at: expect.any(String),
         author: expect.any(String),
-        body: expect.any(String)
-      })
-    })
+        body: expect.any(String),
+      });
+    });
   });
-  test('should return an empty array when given a valid review_id that doesn\'t have any associated comments', async () => {
-    const {body: {comments}} = await request(app).get('/api/reviews/7/comments').expect(200);
+  test("should return an empty array when given a valid review_id that doesn't have any associated comments", async () => {
+    const {
+      body: { comments },
+    } = await request(app).get("/api/reviews/7/comments").expect(200);
 
     expect(comments).toHaveLength(0);
   });
-  test.skip('should return a 404 and a custom message when trying to access the comments of a review that doesn\'t exist in the database', async () => {
-    const {body: {message}} = await request(app).get('/api/reviews/15/comments').expect(404);
+  test.skip("should return a 404 and a custom message when trying to access the comments of a review that doesn't exist in the database", async () => {
+    const {
+      body: { message },
+    } = await request(app).get("/api/reviews/15/comments").expect(404);
 
     expect(message).toBe("Review not found");
   });
-  test('should return a 400 and custom message when passed an invalid review_id', async () => {
-    const {body: {message}} = await request(app).get('/api/reviews/seven/comments').expect(400);
+  test("should return a 400 and custom message when passed an invalid review_id", async () => {
+    const {
+      body: { message },
+    } = await request(app).get("/api/reviews/seven/comments").expect(400);
 
     expect(message).toBe("Invalid review_id");
   });
+});
 
+describe.only("POST - /api/reviews/:review_id/comments", () => {
+  test("should insert a new comment into the comments table and return the created comment object", async () => {
+    const {
+      body: { comment },
+    } = await request(app)
+      .post("/api/reviews/2/comments")
+      .send({
+        author: "philippaclaire9",
+        body: "test body",
+      })
+      .expect(201);
+
+    expect(comment).toMatchObject({
+      comment_id: 7,
+      author: "philippaclaire9",
+      review_id: 2,
+      votes: 0,
+      created_at: expect.any(String),
+      body: "test body",
+    });
+  });
+  test('should return a 400 and custom message when an unregistered user tries to comment', async () => {
+    const {
+      body: { message },
+    } = await request(app)
+      .post("/api/reviews/2/comments")
+      .send({
+        author: "loves2spooge",
+        body: "test body",
+      })
+      .expect(400);
+    
+    expect(message).toBe("Please register to comment")
+  });
 });
