@@ -35,7 +35,7 @@ describe("GET - /api/invalidpath", () => {
   });
 });
 
-describe.only("GET - /api/reviews", () => {
+describe("GET - /api/reviews", () => {
   test("should return an array of review objects, ordered by date descending by default", async () => {
     const {
       body: { reviews },
@@ -57,20 +57,43 @@ describe.only("GET - /api/reviews", () => {
     });
     expect(reviews).toBeSortedBy("created_at", { descending: true });
   });
-  test('should return an array of review objects, ordered by the specified parameters', async () => {
+  test("should return an array of review objects, ordered by the specified parameters", async () => {
     const {
       body: { reviews },
-    } = await request(app).get("/api/reviews?sort_by=review_id&order=asc").expect(200);
+    } = await request(app)
+      .get("/api/reviews?sort_by=review_id&order=asc")
+      .expect(200);
 
     expect(reviews).toBeSortedBy("review_id", { ascending: true });
   });
-  test('should return an array of review objects, filtered by the specified category', async () => {
+  test("should return an array of review objects, filtered by the specified category", async () => {
     const {
       body: { reviews },
     } = await request(app).get("/api/reviews?category=dexterity").expect(200);
 
     expect(reviews).toHaveLength(1);
     expect(reviews[0].review_id).toBe(2);
+  });
+  test('should return 400 status code and a message of "bad request" if provided an invalid column to sort by', async () => {
+    const {
+      body: { message },
+    } = await request(app).get("/api/reviews?sort_by=dexterity").expect(400);
+
+    expect(message).toBe("bad request");
+  });
+  test('should return 400 status code and a message of "bad request" if provided an invalid order query', async () => {
+    const {
+      body: { message },
+    } = await request(app).get("/api/reviews?order=dexterity").expect(400);
+
+    expect(message).toBe("bad request");
+  });
+  test('should return 404 if provided an category that doesn\'t exist in the database', async () => {
+    const {
+      body: { message },
+    } = await request(app).get("/api/reviews?category=chance").expect(404);
+
+    expect(message).toBe("Category not found");
   });
 });
 

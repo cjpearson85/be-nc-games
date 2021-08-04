@@ -14,23 +14,29 @@ exports.selectReviews = async ({ sort_by, order, category }) => {
   const validOrder = ["asc", "desc"];
 
   if (!validSortBy.includes(sort_by) || !validOrder.includes(order)) {
-    return Promise.reject({ status: 400, msg: "bad request" });
+    return Promise.reject({ status: 400, message: "bad request" });
+  }
+
+  const { rows: categories} = await db.query(`SELECT category FROM reviews;`)
+
+  if (!categories.map(row => row.category).includes(category) && category !== undefined) {
+    return Promise.reject({ status: 404, message: "Category not found" });
   }
 
   let queryValues = [];
   let queryStr = `
-        SELECT owner, title, reviews.review_id, category,review_img_url, reviews.created_at, reviews.votes, COUNT(comment_id) AS comment_count
-        FROM reviews
-        LEFT JOIN comments ON reviews.review_id = comments.review_id`;
+    SELECT owner, title, reviews.review_id, category,review_img_url, reviews.created_at, reviews.votes, COUNT(comment_id) AS comment_count
+    FROM reviews
+    LEFT JOIN comments ON reviews.review_id = comments.review_id`;
 
   if (category) {
-      queryStr += ` WHERE category = $1`;
-      queryValues.push(category);
+    queryStr += ` WHERE category = $1`;
+    queryValues.push(category);
   }
 
   queryStr += ` 
     GROUP BY reviews.review_id
-    ORDER BY ${sort_by} ${order};`
+    ORDER BY ${sort_by} ${order};`;
 
   const { rows } = await db.query(queryStr, queryValues);
 
