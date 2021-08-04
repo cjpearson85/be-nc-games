@@ -45,6 +45,20 @@ describe("GET - /api/invalidpath", () => {
   });
 });
 
+describe("GET - /api/users", () => {
+  test("should return an array of user objects on a key of users", async () => {
+    const {
+      body: { users },
+    } = await request(app).get("/api/users").expect(200);
+
+    expect(Array.isArray(users)).toBe(true);
+    expect(users).toHaveLength(4);
+    users.forEach(user => {
+      expect(user).toHaveProperty("username");
+    })
+  });
+});
+
 describe("GET - /api/reviews", () => {
   test("should return an array of review objects, ordered by date descending by default", async () => {
     const {
