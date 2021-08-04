@@ -17,9 +17,12 @@ exports.selectReviews = async ({ sort_by, order, category }) => {
     return Promise.reject({ status: 400, message: "bad request" });
   }
 
-  const { rows: categories} = await db.query(`SELECT category FROM reviews;`)
+  const { rows: categories } = await db.query(`SELECT category FROM reviews;`);
 
-  if (!categories.map(row => row.category).includes(category) && category !== undefined) {
+  if (
+    !categories.map((row) => row.category).includes(category) &&
+    category !== undefined
+  ) {
     return Promise.reject({ status: 404, message: "Category not found" });
   }
 
@@ -71,4 +74,14 @@ exports.updateReviewById = async (review_id, body) => {
   }
   return rows[0];
   // Update this to make sure votes doesn't become a negative number
+};
+
+exports.selectCommentsByReviewId = async (review_id) => {
+  const { rows } = await db.query(
+    `SELECT comment_id, votes, created_at, author, body FROM comments 
+    WHERE review_id = $1;`,
+    [review_id]
+  );
+
+  return rows;
 };

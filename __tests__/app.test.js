@@ -156,3 +156,37 @@ describe("PATCH - /api/reviews/:review_id", () => {
     expect(message).toBe("Review does not exist");
   });
 });
+
+describe('GET - /api/reviews/:review_id/comments', () => {
+  test('should return an array of all the comments for a specific review', async () => {
+    const {body: {comments}} = await request(app).get('/api/reviews/2/comments').expect(200);
+
+    expect(Array.isArray(comments)).toBe(true);
+    expect(comments).toHaveLength(3);
+    comments.forEach(comment => {
+      expect(comment).toMatchObject({
+        comment_id: expect.any(Number),
+        votes: expect.any(Number),
+        created_at: expect.any(String),
+        author: expect.any(String),
+        body: expect.any(String)
+      })
+    })
+  });
+  test('should return an empty array when given a valid review_id that doesn\'t have any associated comments', async () => {
+    const {body: {comments}} = await request(app).get('/api/reviews/7/comments').expect(200);
+
+    expect(comments).toHaveLength(0);
+  });
+  test.skip('should return a 404 and a custom message when trying to access the comments of a review that doesn\'t exist in the database', async () => {
+    const {body: {message}} = await request(app).get('/api/reviews/15/comments').expect(404);
+
+    expect(message).toBe("Review not found");
+  });
+  test('should return a 400 and custom message when passed an invalid review_id', async () => {
+    const {body: {message}} = await request(app).get('/api/reviews/seven/comments').expect(400);
+
+    expect(message).toBe("Invalid review_id");
+  });
+
+});
