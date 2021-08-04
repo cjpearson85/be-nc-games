@@ -53,9 +53,25 @@ describe("GET - /api/users", () => {
 
     expect(Array.isArray(users)).toBe(true);
     expect(users).toHaveLength(4);
-    users.forEach(user => {
+    users.forEach((user) => {
       expect(user).toHaveProperty("username");
-    })
+    });
+  });
+});
+
+describe.only("GET - /api/users/:username", () => {
+  test("should return a user object matching the associated username", async () => {
+    const {
+      body: { user },
+    } = await request(app).get("/api/users/philippaclaire9").expect(200);
+
+    const output = {
+      username: "philippaclaire9",
+      avatar_url: "https://avatars2.githubusercontent.com/u/24604688?s=460&v=4",
+      name: "philippa",
+    };
+
+    expect(user).toEqual(output);
   });
 });
 
