@@ -34,3 +34,17 @@ exports.removeCommentById = async (comment_id) => {
     [comment_id]
   );
 };
+
+exports.updateCommentById = async (comment_id, body) => {
+  const { rows } = await db.query(
+    `UPDATE comments
+    SET votes = votes + $1
+    WHERE comment_id = $2
+    RETURNING *`,
+    [body.inc_votes, comment_id]
+  );
+  if (!rows[0]) {
+    return Promise.reject({ status: 404, message: "Comment does not exist" });
+  }
+  return rows[0];
+};

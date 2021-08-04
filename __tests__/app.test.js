@@ -59,7 +59,7 @@ describe("GET - /api/users", () => {
   });
 });
 
-describe.only("GET - /api/users/:username", () => {
+describe("GET - /api/users/:username", () => {
   test("should return a user object matching the associated username", async () => {
     const {
       body: { user },
@@ -271,6 +271,16 @@ describe("POST - /api/reviews/:review_id/comments", () => {
       .expect(400);
 
     expect(message).toBe("Please register to comment");
+  });
+});
+
+describe("PATCH - /api/comments/:comment_id", () => {
+  test("should update the specified comment from the database and return the amended comment", async () => {
+    const {body: {comment}} = await request(app)
+      .patch("/api/comments/6")
+      .send({ inc_votes : 1 })
+      .expect(200)
+    expect(comment.votes).toBe(11);
   });
 });
 
