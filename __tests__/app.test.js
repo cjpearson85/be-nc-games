@@ -7,6 +7,16 @@ const app = require("../app.js");
 beforeEach(() => seed(testData));
 afterAll(() => db.end());
 
+describe("GET - /api", () => {
+  test("should return a json representation of all the available endpoints of the api", async () => {
+    const {
+      body: { endpoints },
+    } = await request(app).get("/api").expect(200);
+    expect(endpoints).toHaveProperty("GET /api/categories");
+    expect(endpoints).toHaveProperty("GET /api/reviews");
+  });
+});
+
 describe("GET - /api/categories", () => {
   test('should return an array of category objects on a key of "categories"', async () => {
     const {
@@ -198,7 +208,7 @@ describe("GET - /api/reviews/:review_id/comments", () => {
   });
 });
 
-describe.only("POST - /api/reviews/:review_id/comments", () => {
+describe("POST - /api/reviews/:review_id/comments", () => {
   test("should insert a new comment into the comments table and return the created comment object", async () => {
     const {
       body: { comment },
@@ -219,7 +229,7 @@ describe.only("POST - /api/reviews/:review_id/comments", () => {
       body: "test body",
     });
   });
-  test('should return a 400 and custom message when an unregistered user tries to comment', async () => {
+  test("should return a 400 and custom message when an unregistered user tries to comment", async () => {
     const {
       body: { message },
     } = await request(app)
@@ -229,7 +239,21 @@ describe.only("POST - /api/reviews/:review_id/comments", () => {
         body: "test body",
       })
       .expect(400);
-    
-    expect(message).toBe("Please register to comment")
+
+    expect(message).toBe("Please register to comment");
+  });
+});
+
+describe("DELETE - /api/comments/:comment_id", () => {
+  test("should remove the specified comment from the database", () => {
+    return request(app)
+      .delete("/api/comments/6")
+      .expect(204)
+      .then(() => {
+        return db.query("SELECT comment_id FROM comments;");
+      })
+      .then(({ rows }) => {
+        expect(rows).toHaveLength(5);
+      });
   });
 });

@@ -26,3 +26,11 @@ exports.insertCommentByReviewId = async (review_id, body) => {
 
   return rows[0];
 };
+
+exports.removeCommentById = async (comment_id) => {
+  return db.query(`
+    DELETE FROM comments
+    WHERE comment_id = $1;`,
+    [comment_id]
+  );
+};
