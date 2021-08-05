@@ -135,7 +135,7 @@ describe("GET - /api/reviews", () => {
 
     expect(message).toBe("Category not found");
   });
-  test('should return the first ten rows when passed no additional queries', async () => {
+  test("should return the first ten rows when passed no additional queries", async () => {
     const {
       body: { reviews },
     } = await request(app).get("/api/reviews").expect(200);
@@ -145,7 +145,7 @@ describe("GET - /api/reviews", () => {
     expect(reviews[0].review_id).toBe(7);
     expect(reviews[9].review_id).toBe(1);
   });
-  test('should return the second five rows when passed additional queries', async () => {
+  test("should return the second five rows when passed additional queries", async () => {
     const {
       body: { reviews },
     } = await request(app).get("/api/reviews?limit=5&p=2").expect(200);
@@ -154,6 +154,16 @@ describe("GET - /api/reviews", () => {
     expect(reviews).toHaveLength(5);
     expect(reviews[0].review_id).toBe(10);
     expect(reviews[4].review_id).toBe(1);
+  });
+  test("should return an array of reviews by the limit and a total_count displaying the number of result discounting the limit", async () => {
+    const {
+      body: { total_count, reviews },
+    } = await request(app).get("/api/reviews?limit=5").expect(200);
+
+    expect(Array.isArray(reviews)).toBe(true);
+    expect(reviews).toHaveLength(5);
+    expect(reviews[0].review_id).toBe(7);
+    expect(total_count).toBe(13);
   });
 });
 
@@ -296,10 +306,12 @@ describe("POST - /api/reviews/:review_id/comments", () => {
 
 describe("PATCH - /api/comments/:comment_id", () => {
   test("should update the specified comment from the database and return the amended comment", async () => {
-    const {body: {comment}} = await request(app)
+    const {
+      body: { comment },
+    } = await request(app)
       .patch("/api/comments/6")
-      .send({ inc_votes : 1 })
-      .expect(200)
+      .send({ inc_votes: 1 })
+      .expect(200);
     expect(comment.votes).toBe(11);
   });
 });

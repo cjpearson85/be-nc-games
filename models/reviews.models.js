@@ -42,8 +42,11 @@ exports.selectReviews = async ({ sort_by, order, category, limit, p }) => {
 
   queryStr += ` 
     GROUP BY reviews.review_id
-    ORDER BY ${sort_by} ${order}
-    LIMIT $${queryCount} `;
+    ORDER BY ${sort_by} ${order} `;
+
+  const { rowCount } = await db.query(queryStr, queryValues);
+
+  queryStr += `LIMIT $${queryCount} `;
 
   queryValues.push(limit);
   queryCount++;
@@ -55,7 +58,7 @@ exports.selectReviews = async ({ sort_by, order, category, limit, p }) => {
 
   const { rows } = await db.query(queryStr, queryValues);
 
-  return rows;
+  return { rows, rowCount };
 };
 
 exports.selectReviewById = async (review_id) => {

@@ -12,12 +12,12 @@ exports.getReviews = (req, res, next) => {
     order: order || "desc",
     category,
     limit: limit || 10,
-    p: p || 1
+    p: p || 1,
   };
 
   selectReviews(queries)
-    .then((reviews) => {
-      res.status(200).send({ reviews });
+    .then(({ rows: reviews, rowCount: total_count }) => {
+      res.status(200).send({ total_count, reviews });
     })
     .catch(next);
 };
