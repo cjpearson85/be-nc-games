@@ -17,6 +17,16 @@ describe("GET - /api", () => {
   });
 });
 
+describe("GET - /api/invalidpath", () => {
+  test("should return a 404 with a custom message if a request is made to an invalid path", async () => {
+    const {
+      body: { message },
+    } = await request(app).get("/api/invalidpath").expect(404);
+
+    expect(message).toBe("Invalid path");
+  });
+});
+
 describe("GET - /api/categories", () => {
   test('should return an array of category objects on a key of "categories"', async () => {
     const {
@@ -54,16 +64,6 @@ describe('POST - /api/categories', () => {
 
       const { rowCount } = await db.query(`SELECT * FROM categories`);
       expect(rowCount).toBe(5);
-  });
-});
-
-describe("GET - /api/invalidpath", () => {
-  test("should return a 404 with a custom message if a request is made to an invalid path", async () => {
-    const {
-      body: { message },
-    } = await request(app).get("/api/invalidpath").expect(404);
-
-    expect(message).toBe("Invalid path");
   });
 });
 
