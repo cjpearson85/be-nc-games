@@ -35,7 +35,7 @@ describe("GET - /api/categories", () => {
   });
 });
 
-describe.only('POST - /api/categories', () => {
+describe('POST - /api/categories', () => {
   test('should add a new category to the categories table and return the newly created category object', async () => {
     const {
       body: { category },
@@ -277,6 +277,24 @@ describe("PATCH - /api/reviews/:review_id", () => {
       .expect(404);
 
     expect(message).toBe("Review does not exist");
+  });
+});
+
+describe("DELETE - /api/reviews/:review_id", () => {
+  test("should remove the specified review and all associated comments from the database", () => {
+    return request(app)
+      .delete("/api/reviews/2")
+      .expect(204)
+      .then(() => {
+        return db.query("SELECT review_id FROM reviews;");
+      })
+      .then(({ rows }) => {
+        expect(rows).toHaveLength(12);
+        return db.query("SELECT * FROM reviews WHERE review_id = 2;")
+      })
+      .then(({ rows }) => {
+        expect(rows).toHaveLength(0);
+      });
   });
 });
 

@@ -113,3 +113,11 @@ exports.updateReviewById = async (review_id, body) => {
   return rows[0];
   // Update this to make sure votes doesn't become a negative number
 };
+
+exports.removeReviewById = async (review_id) => {
+  return db.query(`
+    DELETE FROM reviews
+    WHERE review_id = $1;`,
+    [review_id]
+  );
+}
