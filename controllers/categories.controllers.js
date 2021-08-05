@@ -1,4 +1,4 @@
-const { selectCategories } = require("../models/categories.models");
+const { selectCategories, insertCategory } = require("../models/categories.models");
 
 exports.getCategories = (req, res, next) => {
   selectCategories()
@@ -7,3 +7,13 @@ exports.getCategories = (req, res, next) => {
     })
     .catch(next);
 };
+
+exports.postCategory = (req, res, next) => {
+  const { body } = req;
+
+  insertCategory(body)
+    .then((category) => {
+      res.status(201).send({ category });
+    })
+    .catch(next);
+}

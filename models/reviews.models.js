@@ -61,6 +61,29 @@ exports.selectReviews = async ({ sort_by, order, category, limit, p }) => {
   return { rows, rowCount };
 };
 
+exports.insertReview = async (body) => {
+  const { owner, title, review_body, designer, category } = body;
+
+  let queryStr = `
+    INSERT INTO reviews
+    (owner, title, review_body, designer, category)
+    VALUES
+    ($1, $2, $3, $4, $5)
+    RETURNING review_id`;
+
+  const result = await db.query(queryStr, [
+    owner,
+    title,
+    review_body,
+    designer,
+    category,
+  ]);
+
+  const { review_id } = result.rows[0];
+
+  return this.selectReviewById(review_id);
+};
+
 exports.selectReviewById = async (review_id) => {
   const { rows } = await db.query(
     `SELECT owner, title, reviews.review_id, review_body, designer, review_img_url, category, reviews.created_at, reviews.votes, COUNT(comment_id) AS comment_count

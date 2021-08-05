@@ -4,3 +4,18 @@ exports.selectCategories = async () => {
   const { rows } = await db.query(`SELECT * FROM categories;`);
   return rows;
 };
+
+exports.insertCategory = async (body) => {
+  const { slug, description } = body;
+
+  let queryStr = `
+    INSERT INTO categories
+    (slug, description)
+    VALUES
+    ($1, $2)
+    RETURNING *`;
+
+  const { rows } = await db.query(queryStr, [slug, description]);
+
+  return rows[0];
+};

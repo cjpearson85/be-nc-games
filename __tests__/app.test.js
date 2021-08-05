@@ -35,6 +35,28 @@ describe("GET - /api/categories", () => {
   });
 });
 
+describe.only('POST - /api/categories', () => {
+  test('should add a new category to the categories table and return the newly created category object', async () => {
+    const {
+      body: { category },
+    } = await request(app)
+      .post("/api/categories")
+      .send({
+        slug: "test_slug",
+        description: "test_description"
+      })
+      .expect(201);
+
+      expect(category).toEqual({
+        slug: "test_slug",
+        description: "test_description"
+      })
+
+      const { rowCount } = await db.query(`SELECT * FROM categories`);
+      expect(rowCount).toBe(5);
+  });
+});
+
 describe("GET - /api/invalidpath", () => {
   test("should return a 404 with a custom message if a request is made to an invalid path", async () => {
     const {
@@ -166,6 +188,38 @@ describe("GET - /api/reviews", () => {
   });
 });
 
+describe("POST - /api/reviews", () => {
+  test("should add a new review to the database and return the newly created review object", async () => {
+    const {
+      body: { review },
+    } = await request(app)
+      .post("/api/reviews")
+      .send({
+        owner: "dav3rid",
+        title: "test_title",
+        review_body: "test_body",
+        designer: "Gamey McGameface",
+        category: "dexterity",
+      })
+      .expect(201);
+
+      expect(review).toMatchObject({
+        review_id: 14,
+        owner: "dav3rid",
+        title: "test_title",
+        review_body: "test_body",
+        designer: "Gamey McGameface",
+        category: "dexterity",
+        votes: 0,
+        created_at: expect.any(String),
+        comment_count: '0'
+      })
+
+      const { rowCount } = await db.query(`SELECT * FROM reviews`);
+      expect(rowCount).toBe(14);
+  });
+});
+
 describe("GET - /api/reviews/:review_id", () => {
   test("should return a review object matching the review_id", async () => {
     const {
@@ -244,10 +298,12 @@ describe("GET - /api/reviews/:review_id/comments", () => {
       });
     });
   });
-  test('should return only the number of comments specified by the limit', async () => {
+  test("should return only the number of comments specified by the limit", async () => {
     const {
       body: { total_count, comments },
-    } = await request(app).get("/api/reviews/2/comments?limit=1&p=2").expect(200);
+    } = await request(app)
+      .get("/api/reviews/2/comments?limit=1&p=2")
+      .expect(200);
 
     expect(Array.isArray(comments)).toBe(true);
     expect(comments).toHaveLength(1);
