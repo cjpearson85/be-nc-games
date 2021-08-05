@@ -162,7 +162,6 @@ describe("GET - /api/reviews", () => {
 
     expect(Array.isArray(reviews)).toBe(true);
     expect(reviews).toHaveLength(5);
-    expect(reviews[0].review_id).toBe(7);
     expect(total_count).toBe(13);
   });
 });
@@ -244,6 +243,16 @@ describe("GET - /api/reviews/:review_id/comments", () => {
         body: expect.any(String),
       });
     });
+  });
+  test('should return only the number of comments specified by the limit', async () => {
+    const {
+      body: { total_count, comments },
+    } = await request(app).get("/api/reviews/2/comments?limit=1&p=2").expect(200);
+
+    expect(Array.isArray(comments)).toBe(true);
+    expect(comments).toHaveLength(1);
+    expect(comments[0].comment_id).toBe(1);
+    expect(total_count).toBe(3);
   });
   test("should return an empty array when given a valid review_id that doesn't have any associated comments", async () => {
     const {

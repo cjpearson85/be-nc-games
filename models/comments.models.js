@@ -1,13 +1,26 @@
 const db = require("../db/connection.js");
 
-exports.selectCommentsByReviewId = async (review_id) => {
-  const { rows } = await db.query(
-    `SELECT comment_id, votes, created_at, author, body FROM comments
-    WHERE review_id = $1;`,
-    [review_id]
-  );
+exports.selectCommentsByReviewId = async (review_id, queries) => {
+  const { limit, p } = queries;
+  const queryValues = [review_id];
 
-  return rows;
+  let queryStr = `
+    SELECT comment_id, votes, created_at, author, body 
+    FROM comments
+    WHERE review_id = $1 
+    ORDER BY created_at ASC `;
+
+  const { rowCount } = await db.query(queryStr, queryValues);
+  
+  queryStr += `LIMIT $2 OFFSET $3;`;
+
+  const offset = (p - 1) * limit;
+  queryValues.push(limit);
+  queryValues.push(offset);
+
+  const { rows } = await db.query(queryStr, queryValues);
+
+  return { rows, rowCount };
 };
 
 exports.insertCommentByReviewId = async (review_id, body) => {
@@ -28,7 +41,8 @@ exports.insertCommentByReviewId = async (review_id, body) => {
 };
 
 exports.removeCommentById = async (comment_id) => {
-  return db.query(`
+  return db.query(
+    `
     DELETE FROM comments
     WHERE comment_id = $1;`,
     [comment_id]
