@@ -6,11 +6,13 @@ const {
 } = require("../models/reviews.models");
 
 exports.getReviews = (req, res, next) => {
-  const { sort_by, order, category } = req.query;
+  const { sort_by, order, category, limit, p } = req.query;
   const queries = {
     sort_by: sort_by || "created_at",
     order: order || "desc",
     category,
+    limit: limit || 10,
+    p: p || 1
   };
 
   selectReviews(queries)

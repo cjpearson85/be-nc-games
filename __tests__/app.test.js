@@ -79,7 +79,7 @@ describe("GET - /api/reviews", () => {
   test("should return an array of review objects, ordered by date descending by default", async () => {
     const {
       body: { reviews },
-    } = await request(app).get("/api/reviews").expect(200);
+    } = await request(app).get("/api/reviews?limit=15").expect(200);
 
     expect(Array.isArray(reviews)).toBe(true);
     expect(reviews).toHaveLength(13);
@@ -134,6 +134,26 @@ describe("GET - /api/reviews", () => {
     } = await request(app).get("/api/reviews?category=chance").expect(404);
 
     expect(message).toBe("Category not found");
+  });
+  test('should return the first ten rows when passed no additional queries', async () => {
+    const {
+      body: { reviews },
+    } = await request(app).get("/api/reviews").expect(200);
+
+    expect(Array.isArray(reviews)).toBe(true);
+    expect(reviews).toHaveLength(10);
+    expect(reviews[0].review_id).toBe(7);
+    expect(reviews[9].review_id).toBe(1);
+  });
+  test('should return the second five rows when passed additional queries', async () => {
+    const {
+      body: { reviews },
+    } = await request(app).get("/api/reviews?limit=5&p=2").expect(200);
+
+    expect(Array.isArray(reviews)).toBe(true);
+    expect(reviews).toHaveLength(5);
+    expect(reviews[0].review_id).toBe(10);
+    expect(reviews[4].review_id).toBe(1);
   });
 });
 

@@ -1,6 +1,6 @@
 const db = require("../db/connection.js");
 
-exports.selectReviews = async ({ sort_by, order, category }) => {
+exports.selectReviews = async ({ sort_by, order, category, limit, p }) => {
   const validSortBy = [
     "owner",
     "title",
@@ -32,14 +32,26 @@ exports.selectReviews = async ({ sort_by, order, category }) => {
     FROM reviews
     LEFT JOIN comments ON reviews.review_id = comments.review_id`;
 
+  let queryCount = 1;
+
   if (category) {
-    queryStr += ` WHERE category = $1`;
+    queryStr += ` WHERE category = $${queryCount}`;
     queryValues.push(category);
+    queryCount++;
   }
 
   queryStr += ` 
     GROUP BY reviews.review_id
-    ORDER BY ${sort_by} ${order};`;
+    ORDER BY ${sort_by} ${order}
+    LIMIT $${queryCount} `;
+
+  queryValues.push(limit);
+  queryCount++;
+
+  queryStr += `OFFSET $${queryCount};`;
+
+  const offset = (p - 1) * limit;
+  queryValues.push(offset);
 
   const { rows } = await db.query(queryStr, queryValues);
 
