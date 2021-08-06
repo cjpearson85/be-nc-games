@@ -101,6 +101,13 @@ describe("GET - /api/users/:username", () => {
 
     expect(user).toEqual(output);
   });
+  test("should return a 404 if an passed a valid username that doesn't exist in the database", async () => {
+    const {
+      body: { message },
+    } = await request(app).get("/api/users/dog").expect(404);
+
+    expect(message).toBe("User does not exist");
+  });
 });
 
 describe("GET - /api/reviews", () => {
