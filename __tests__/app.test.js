@@ -46,50 +46,50 @@ describe("GET - /api/categories", () => {
   });
 });
 
-describe('POST - /api/categories', () => {
-  test('should add a new category to the categories table and return the newly created category object', async () => {
+describe("POST - /api/categories", () => {
+  test("should add a new category to the categories table and return the newly created category object", async () => {
     const {
       body: { category },
     } = await request(app)
       .post("/api/categories")
       .send({
         slug: "test_slug",
-        description: "test_description"
+        description: "test_description",
       })
       .expect(201);
 
-      expect(category).toEqual({
-        slug: "test_slug",
-        description: "test_description"
-      })
+    expect(category).toEqual({
+      slug: "test_slug",
+      description: "test_description",
+    });
 
-      const { rowCount } = await db.query(`SELECT * FROM categories`);
-      expect(rowCount).toBe(5);
+    const { rowCount } = await db.query(`SELECT * FROM categories`);
+    expect(rowCount).toBe(5);
   });
-  test('should return a 400 status code and custom message when no slug on request body', async () => {
+  test("should return a 400 status code and custom message when no slug on request body", async () => {
     const {
       body: { message },
     } = await request(app)
       .post("/api/categories")
       .send({
-        description: "test_description"
+        description: "test_description",
       })
       .expect(400);
 
-      expect(message).toBe("No slug on POST body");
+    expect(message).toBe("No slug on POST body");
   });
-  test('should return a 400 status code and custom message when slug already exists in db', async () => {
+  test("should return a 400 status code and custom message when slug already exists in db", async () => {
     const {
       body: { message },
     } = await request(app)
       .post("/api/categories")
       .send({
         slug: "dexterity",
-        description: "test_description"
+        description: "test_description",
       })
       .expect(400);
 
-      expect(message).toBe("Duplicate key value violates unique constraint");
+    expect(message).toBe("Duplicate key value violates unique constraint");
   });
 });
 
@@ -105,8 +105,8 @@ describe("GET - /api/users", () => {
       expect(user).toMatchObject({
         username: expect.any(String),
         avatar_url: expect.any(String),
-        name: expect.any(String)
-      })
+        name: expect.any(String),
+      });
     });
     expect(users).toBeSortedBy("username", { ascending: true });
   });
@@ -241,22 +241,22 @@ describe("POST - /api/reviews", () => {
       })
       .expect(201);
 
-      expect(review).toMatchObject({
-        review_id: 14,
-        owner: "dav3rid",
-        title: "test_title",
-        review_body: "test_body",
-        designer: "Gamey McGameface",
-        category: "dexterity",
-        votes: 0,
-        created_at: expect.any(String),
-        comment_count: '0'
-      })
+    expect(review).toMatchObject({
+      review_id: 14,
+      owner: "dav3rid",
+      title: "test_title",
+      review_body: "test_body",
+      designer: "Gamey McGameface",
+      category: "dexterity",
+      votes: 0,
+      created_at: expect.any(String),
+      comment_count: "0",
+    });
 
-      const { rowCount } = await db.query(`SELECT * FROM reviews`);
-      expect(rowCount).toBe(14);
+    const { rowCount } = await db.query(`SELECT * FROM reviews`);
+    expect(rowCount).toBe(14);
   });
-  test('should return a 400 status code and message if missing any required input fields', async () => {
+  test("should return a 400 status code and message if missing any required input fields", async () => {
     const {
       body: { message },
     } = await request(app)
@@ -271,7 +271,7 @@ describe("POST - /api/reviews", () => {
 
     expect(message).toBe("Missing required fields");
   });
-  test('should return a 400 status code and message if owner not in the db', async () => {
+  test("should return a 404 status code and message if owner not in the db", async () => {
     const {
       body: { message },
     } = await request(app)
@@ -283,11 +283,11 @@ describe("POST - /api/reviews", () => {
         designer: "Gamey McGameface",
         category: "dexterity",
       })
-      .expect(400);
+      .expect(404);
 
     expect(message).toBe("Insert or update violates foreign key constraint");
   });
-  test('should return a 400 status code and message if category not in the db', async () => {
+  test("should return a 404 status code and message if category not in the db", async () => {
     const {
       body: { message },
     } = await request(app)
@@ -299,12 +299,10 @@ describe("POST - /api/reviews", () => {
         designer: "Gamey McGameface",
         category: "deck-building",
       })
-      .expect(400);
+      .expect(404);
 
     expect(message).toBe("Insert or update violates foreign key constraint");
   });
-
-
 });
 
 describe("GET - /api/reviews/:review_id", () => {
@@ -355,7 +353,7 @@ describe("PATCH - /api/reviews/:review_id", () => {
 
     expect(review.votes).toBe(80);
   });
-  test("should ", async () => {
+  test("should return a 404 if an passed a valid review_id that doesn't exist in the database", async () => {
     const {
       body: { message },
     } = await request(app)
@@ -377,7 +375,7 @@ describe("DELETE - /api/reviews/:review_id", () => {
       })
       .then(({ rows }) => {
         expect(rows).toHaveLength(12);
-        return db.query("SELECT * FROM reviews WHERE review_id = 2;")
+        return db.query("SELECT * FROM reviews WHERE review_id = 2;");
       })
       .then(({ rows }) => {
         expect(rows).toHaveLength(0);
@@ -469,18 +467,77 @@ describe("POST - /api/reviews/:review_id/comments", () => {
       body: "test body",
     });
   });
+  test("should ignore any additional fields as long as the required ones are presnt", async () => {
+    const {
+      body: { comment },
+    } = await request(app)
+      .post("/api/reviews/2/comments")
+      .send({
+        author: "philippaclaire9",
+        body: "test body",
+        extra_key: "test",
+      })
+      .expect(201);
+
+    expect(comment).toMatchObject({
+      comment_id: 7,
+      author: "philippaclaire9",
+      review_id: 2,
+      votes: 0,
+      created_at: expect.any(String),
+      body: "test body",
+    });
+  });
   test("should return a 400 and custom message when an unregistered user tries to comment", async () => {
     const {
       body: { message },
     } = await request(app)
       .post("/api/reviews/2/comments")
       .send({
-        author: "loves2spooge",
+        author: "test_user",
+        body: "test_body",
+      })
+      .expect(404);
+
+    expect(message).toBe("Insert or update violates foreign key constraint");
+  });
+  test("should return a 400 and custom message when a required input field is missing", async () => {
+    const {
+      body: { message },
+    } = await request(app)
+      .post("/api/reviews/2/comments")
+      .send({
+        body: "test_body",
+      })
+      .expect(400);
+
+    expect(message).toBe("Missing required fields");
+  });
+  test("should return a 404 and a custom message when trying to post a comment to a review that doesn't exist in the database", async () => {
+    const {
+      body: { message },
+    } = await request(app)
+      .post("/api/reviews/15/comments")
+      .send({
+        author: "philippaclaire9",
+        body: "test body",
+      })
+      .expect(404);
+
+    expect(message).toBe("Insert or update violates foreign key constraint");
+  });
+  test("should return a 400 and custom message when passed an invalid review_id", async () => {
+    const {
+      body: { message },
+    } = await request(app)
+      .post("/api/reviews/seven/comments")
+      .send({
+        author: "philippaclaire9",
         body: "test body",
       })
       .expect(400);
 
-    expect(message).toBe("Insert or update violates foreign key constraint");
+    expect(message).toBe("Bad request");
   });
 });
 

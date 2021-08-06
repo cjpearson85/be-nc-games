@@ -47,6 +47,16 @@ exports.selectCommentsByReviewId = async (review_id, queries) => {
 };
 
 exports.insertCommentByReviewId = async (review_id, body) => {
+  const { author, body: review_body } = body;
+
+  if (!author || !review_body) {
+    return Promise.reject({ status: 400, message: "Missing required fields" });
+  }
+
+  if (Object.is(parseInt(review_id), NaN)) {
+    return Promise.reject({ status: 400, message: "Bad request" });
+  }
+
   let queryStr = `
     INSERT INTO comments
     (author, review_id, body)
@@ -55,9 +65,9 @@ exports.insertCommentByReviewId = async (review_id, body) => {
     RETURNING *;`;
 
   const { rows } = await db.query(queryStr, [
-    body.author,
+    author,
     review_id,
-    body.body,
+    review_body
   ]);
 
   return rows[0];
