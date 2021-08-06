@@ -10,6 +10,10 @@ exports.selectCategories = async () => {
 exports.insertCategory = async (body) => {
   const { slug, description } = body;
 
+  if (!slug) {
+    return Promise.reject({ status: 400, message: "No slug on POST body" });
+  }
+
   let queryStr = `
     INSERT INTO categories
     (slug, description)

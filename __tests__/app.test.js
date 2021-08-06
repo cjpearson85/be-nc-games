@@ -46,7 +46,7 @@ describe("GET - /api/categories", () => {
   });
 });
 
-describe('POST - /api/categories', () => {
+describe.only('POST - /api/categories', () => {
   test('should add a new category to the categories table and return the newly created category object', async () => {
     const {
       body: { category },
@@ -65,6 +65,31 @@ describe('POST - /api/categories', () => {
 
       const { rowCount } = await db.query(`SELECT * FROM categories`);
       expect(rowCount).toBe(5);
+  });
+  test('should return a 400 status code and custom message when no slug on request body', async () => {
+    const {
+      body: { message },
+    } = await request(app)
+      .post("/api/categories")
+      .send({
+        description: "test_description"
+      })
+      .expect(400);
+
+      expect(message).toBe("No slug on POST body");
+  });
+  test('should return a 400 status code and custom message when slug already exists in db', async () => {
+    const {
+      body: { message },
+    } = await request(app)
+      .post("/api/categories")
+      .send({
+        slug: "dexterity",
+        description: "test_description"
+      })
+      .expect(400);
+
+      expect(message).toBe("Duplicate key value violates unique constraint");
   });
 });
 

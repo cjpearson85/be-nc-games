@@ -7,6 +7,8 @@ exports.handlePsqlErrors = (err, req, res, next) => {
     res.status(400).send({ message: "Invalid datatype" });
   } else if (err.code === "23503") {
     res.status(400).send({ message: "Please register to comment" });
+  } else if (err.code === "23505") {
+    res.status(400).send({ message: "Duplicate key value violates unique constraint" });
   } else {
     next(err);
   }

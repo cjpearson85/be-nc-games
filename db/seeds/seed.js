@@ -14,7 +14,7 @@ const seed = async data => {
   await db.query(`
     CREATE TABLE categories (
       slug VARCHAR(100) PRIMARY KEY NOT NULL,
-      description TEXT NOT NULL
+      description TEXT
     )`);
 
   await db.query(`
