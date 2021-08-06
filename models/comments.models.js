@@ -74,6 +74,10 @@ exports.insertCommentByReviewId = async (review_id, body) => {
 };
 
 exports.removeCommentById = async (comment_id) => {
+  if (Object.is(parseInt(comment_id), NaN)) {
+    return Promise.reject({ status: 400, message: "Bad request" });
+  }
+
   return db.query(
     `
     DELETE FROM comments
@@ -83,6 +87,12 @@ exports.removeCommentById = async (comment_id) => {
 };
 
 exports.updateCommentById = async (comment_id, body) => {
+  if (Object.is(parseInt(comment_id), NaN)) {
+    return Promise.reject({ status: 400, message: "Bad request" });
+  } else if (!body.inc_votes) {
+    return Promise.reject({ status: 400, message: "Missing required fields" });
+  }
+
   const { rows } = await db.query(
     `UPDATE comments
     SET votes = votes + $1

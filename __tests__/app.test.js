@@ -551,6 +551,36 @@ describe("PATCH - /api/comments/:comment_id", () => {
       .expect(200);
     expect(comment.votes).toBe(11);
   });
+  test("should return a 400 and custom message when a required input field is missing", async () => {
+    const {
+      body: { message },
+    } = await request(app)
+      .patch("/api/comments/6")
+      .send({})
+      .expect(400);
+
+    expect(message).toBe("Missing required fields");
+  });
+  test("should return a 404 and a custom message when trying to update a comment that doesn't exist", async () => {
+    const {
+      body: { message },
+    } = await request(app)
+      .patch("/api/comments/7")
+      .send({ inc_votes: 1 })
+      .expect(404);
+
+    expect(message).toBe("Comment does not exist");
+  });
+  test("should return a 400 and custom message when passed an invalid comment_id", async () => {
+    const {
+      body: { message },
+    } = await request(app)
+      .patch("/api/comments/seven")
+      .send({ inc_votes: 1 })
+      .expect(400);
+
+    expect(message).toBe("Bad request");
+  });
 });
 
 describe("DELETE - /api/comments/:comment_id", () => {
