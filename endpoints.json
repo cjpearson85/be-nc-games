@@ -47,7 +47,7 @@
   },
   "GET /api/reviews": {
     "description": "serves an array of all reviews",
-    "queries": ["category", "sort_by", "order"],
+    "queries": ["category", "sort_by", "order", "limit", "p"],
     "exampleResponse": {
       "reviews": [
         {
@@ -78,7 +78,6 @@
   },
   "GET /api/reviews/:review_id": {
     "description": "serves up the corresponding review",
-    "queries": [],
     "exampleResponse": {
       "review": {
         "title": "One Night Ultimate Werewolf",
@@ -110,7 +109,7 @@
   },
   "GET /api/reviews/:review_id/comments": {
     "description": "serves an array of all comments of a perticular review",
-    "queries": [],
+    "queries": ["sort_by", "order", "limit", "p"],
     "exampleResponse": {
       "comments": [
         {
