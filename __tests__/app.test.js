@@ -256,6 +256,55 @@ describe("POST - /api/reviews", () => {
       const { rowCount } = await db.query(`SELECT * FROM reviews`);
       expect(rowCount).toBe(14);
   });
+  test('should return a 400 status code and message if missing any required input fields', async () => {
+    const {
+      body: { message },
+    } = await request(app)
+      .post("/api/reviews")
+      .send({
+        owner: "dav3rid",
+        review_body: "test_body",
+        designer: "Gamey McGameface",
+        category: "dexterity",
+      })
+      .expect(400);
+
+    expect(message).toBe("Missing required fields");
+  });
+  test('should return a 400 status code and message if owner not in the db', async () => {
+    const {
+      body: { message },
+    } = await request(app)
+      .post("/api/reviews")
+      .send({
+        owner: "david",
+        title: "test_title",
+        review_body: "test_body",
+        designer: "Gamey McGameface",
+        category: "dexterity",
+      })
+      .expect(400);
+
+    expect(message).toBe("Insert or update violates foreign key constraint");
+  });
+  test('should return a 400 status code and message if category not in the db', async () => {
+    const {
+      body: { message },
+    } = await request(app)
+      .post("/api/reviews")
+      .send({
+        owner: "dav3rid",
+        title: "test_title",
+        review_body: "test_body",
+        designer: "Gamey McGameface",
+        category: "deck-building",
+      })
+      .expect(400);
+
+    expect(message).toBe("Insert or update violates foreign key constraint");
+  });
+
+
 });
 
 describe("GET - /api/reviews/:review_id", () => {
@@ -431,7 +480,7 @@ describe("POST - /api/reviews/:review_id/comments", () => {
       })
       .expect(400);
 
-    expect(message).toBe("Please register to comment");
+    expect(message).toBe("Insert or update violates foreign key constraint");
   });
 });
 

@@ -3,10 +3,10 @@ exports.handle404s = (req, res, next) => {
 };
 
 exports.handlePsqlErrors = (err, req, res, next) => {
-  if (err.code === "22P02" || err === "Invaild datatype") {
+  if (err.code === "22P02") {
     res.status(400).send({ message: "Invalid datatype" });
   } else if (err.code === "23503") {
-    res.status(400).send({ message: "Please register to comment" });
+    res.status(400).send({ message: "Insert or update violates foreign key constraint" });
   } else if (err.code === "23505") {
     res.status(400).send({ message: "Duplicate key value violates unique constraint" });
   } else {
@@ -25,5 +25,5 @@ exports.handleCustomErrors = (err, req, res, next) => {
 
 exports.handle500s = (err, req, res, next) => {
   console.log(err);
-  res.status(500).send({ message: "Server side error" });
+  res.status(500).send({ message: "Server-side error" });
 };

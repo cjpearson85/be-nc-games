@@ -63,6 +63,17 @@ exports.selectReviews = async ({ sort_by, order, category, limit, p }) => {
 
 exports.insertReview = async (body) => {
   const { owner, title, review_body, designer, category } = body;
+  const queryValues = [
+    owner,
+    title,
+    review_body,
+    designer,
+    category,
+  ];
+
+  if (queryValues.some(el => el === undefined)) {
+    return Promise.reject({ status: 400, message: "Missing required fields" });
+  }
 
   let queryStr = `
     INSERT INTO reviews
@@ -71,13 +82,7 @@ exports.insertReview = async (body) => {
     ($1, $2, $3, $4, $5)
     RETURNING review_id`;
 
-  const result = await db.query(queryStr, [
-    owner,
-    title,
-    review_body,
-    designer,
-    category,
-  ]);
+  const result = await db.query(queryStr, queryValues);
 
   const { review_id } = result.rows[0];
 
