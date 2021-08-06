@@ -1,16 +1,19 @@
-const db = require('../connection.js');
-const format = require('pg-format');
-const { categoriesFormatter, usersFormatter, reviewsFormatter, createRef, commentsFormatter } = require('../utils/data-manipulation.js');
+const db = require("../connection.js");
+const {
+  createRef,
+  commentsFormatter,
+  valuesFormatter,
+} = require("../utils/data-manipulation.js");
+const { insertToTable } = require("../utils/sql-queries.js");
 
-const seed = async data => {
+const seed = async (data) => {
   const { categoryData, commentData, reviewData, userData } = data;
-  // DROP TABLES
-  await db.query('DROP TABLE IF EXISTS comments');
-  await db.query('DROP TABLE IF EXISTS reviews');
-  await db.query('DROP TABLE IF EXISTS users');
-  await db.query('DROP TABLE IF EXISTS categories');
 
-  // 1. create tables
+  await db.query("DROP TABLE IF EXISTS comments");
+  await db.query("DROP TABLE IF EXISTS reviews");
+  await db.query("DROP TABLE IF EXISTS users");
+  await db.query("DROP TABLE IF EXISTS categories");
+
   await db.query(`
     CREATE TABLE categories (
       slug VARCHAR(100) PRIMARY KEY NOT NULL,
@@ -47,44 +50,47 @@ const seed = async data => {
       body TEXT
     )`);
 
-  // 2. insert data
-  let categoriesQuery = format(`
-  INSERT INTO categories
-  (slug, description)
-  VALUES
-  %L;
-`, categoriesFormatter(categoryData));
+  let table = "categories";
+  let columns = ["slug", "description"];
+  let values = valuesFormatter(categoryData, columns);
+
+  const categoriesQuery = insertToTable(table, columns, values);
 
   await db.query(categoriesQuery);
 
-  const usersQuery = format(`
-  INSERT INTO users
-  (username, avatar_url, name)
-  VALUES
-  %L;
-  `, usersFormatter(userData));
+  table = "users";
+  columns = ["username", "avatar_url", "name"];
+  values = valuesFormatter(userData, columns);
+
+  const usersQuery = insertToTable(table, columns, values);
 
   await db.query(usersQuery);
 
-  const reviewsQuery = format(`
-  INSERT INTO reviews
-  (title, review_body, designer, review_img_url, votes, category, owner, created_at)
-  VALUES
-  %L
-  RETURNING *;
-  `, reviewsFormatter(reviewData));
+  table = "reviews";
+  columns = [
+    "title",
+    "review_body",
+    "designer",
+    "review_img_url",
+    "votes",
+    "category",
+    "owner",
+    "created_at",
+  ];
+  values = valuesFormatter(reviewData, columns);
+
+  let reviewsQuery = insertToTable(table, columns, values);
+  reviewsQuery += " RETURNING *";
 
   const { rows } = await db.query(reviewsQuery);
 
-  const reviewRefObj = createRef(rows, 'title', 'review_id');
+  const reviewRefObj = createRef(rows, "title", "review_id");
 
-  const commentsQuery = format(`
-  INSERT INTO comments
-  (author, review_id, votes, created_at, body)
-  VALUES
-  %L
-  RETURNING *;
-  `, commentsFormatter(commentData, reviewRefObj));
+  table = "comments";
+  columns = ['author', 'review_id', 'votes', 'created_at', 'body'];
+  values = commentsFormatter(commentData, reviewRefObj);
+
+  const commentsQuery = insertToTable(table, columns, values);
 
   await db.query(commentsQuery);
 };
