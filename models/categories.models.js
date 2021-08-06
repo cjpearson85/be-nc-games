@@ -10,13 +10,13 @@ exports.selectCategories = async () => {
 
 exports.insertCategory = async (body) => {
   const columns = Object.keys(body);
-  const values = [Object.values(body)];
+  const values = Object.values(body);
 
-  if (!columns.includes('slug')) {
+  if (!columns.includes("slug")) {
     return Promise.reject({ status: 400, message: "No slug on POST body" });
   }
 
-  let queryStr = insertToTable('categories', columns, values);
+  let queryStr = insertToTable("categories", columns, [values]);
   queryStr += ` RETURNING *`;
 
   const { rows } = await db.query(queryStr);

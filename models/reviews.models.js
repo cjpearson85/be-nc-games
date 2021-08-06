@@ -1,4 +1,5 @@
 const db = require("../db/connection.js");
+const { insertToTable } = require("../db/utils/sql-queries.js");
 
 exports.selectReviews = async ({ sort_by, order, category, limit, p }) => {
   const validSortBy = [
@@ -62,27 +63,17 @@ exports.selectReviews = async ({ sort_by, order, category, limit, p }) => {
 };
 
 exports.insertReview = async (body) => {
-  const { owner, title, review_body, designer, category } = body;
-  const queryValues = [
-    owner,
-    title,
-    review_body,
-    designer,
-    category,
-  ];
+  const columns = Object.keys(body);
+  const values = Object.values(body);
 
-  if (queryValues.some(el => el === undefined)) {
+  if (values.some(el => el === undefined)) {
     return Promise.reject({ status: 400, message: "Missing required fields" });
   }
 
-  let queryStr = `
-    INSERT INTO reviews
-    (owner, title, review_body, designer, category)
-    VALUES
-    ($1, $2, $3, $4, $5)
-    RETURNING review_id`;
+  let queryStr = insertToTable("reviews", columns, [values]);
+  queryStr += `RETURNING review_id`;
 
-  const result = await db.query(queryStr, queryValues);
+  const result = await db.query(queryStr);
 
   const { review_id } = result.rows[0];
 
