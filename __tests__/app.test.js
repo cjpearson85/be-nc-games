@@ -28,7 +28,7 @@ describe("GET - /api/invalidpath", () => {
 });
 
 describe("GET - /api/categories", () => {
-  test('should return an array of category objects on a key of "categories"', async () => {
+  test('should return an array of category objects on a key of "categories", sorted in ascending alphabetical order by slug by default', async () => {
     const {
       body: { categories },
     } = await request(app).get("/api/categories").expect(200);
@@ -42,6 +42,7 @@ describe("GET - /api/categories", () => {
         description: expect.any(String),
       });
     });
+    expect(categories).toBeSortedBy("slug", { ascending: true });
   });
 });
 
@@ -68,7 +69,7 @@ describe('POST - /api/categories', () => {
 });
 
 describe("GET - /api/users", () => {
-  test("should return an array of user objects on a key of users", async () => {
+  test("should return an array of user objects on a key of users, sorted in ascending alphabetical order by username by default", async () => {
     const {
       body: { users },
     } = await request(app).get("/api/users").expect(200);
@@ -76,8 +77,13 @@ describe("GET - /api/users", () => {
     expect(Array.isArray(users)).toBe(true);
     expect(users).toHaveLength(4);
     users.forEach((user) => {
-      expect(user).toHaveProperty("username");
+      expect(user).toMatchObject({
+        username: expect.any(String),
+        avatar_url: expect.any(String),
+        name: expect.any(String)
+      })
     });
+    expect(users).toBeSortedBy("username", { ascending: true });
   });
 });
 
