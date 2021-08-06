@@ -4,6 +4,17 @@ exports.selectCommentsByReviewId = async (review_id, queries) => {
   const { sort_by, order, limit, p } = queries;
   const queryValues = [review_id];
 
+  const result = await db.query(`SELECT review_id FROM reviews;`);
+  const validIDs = result.rows.map(id => id.review_id);
+
+  if (Object.is(parseInt(review_id), NaN)) {
+    return Promise.reject({ status: 400, message: "Bad request" });
+  }
+
+  if (!validIDs.includes(parseInt(review_id))) {
+    return Promise.reject({ status: 404, message: "Review not found" });
+  }
+
   const validSortBy = [
     "comment_id",
     "author",

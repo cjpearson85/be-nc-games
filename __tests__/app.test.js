@@ -46,7 +46,7 @@ describe("GET - /api/categories", () => {
   });
 });
 
-describe.only('POST - /api/categories', () => {
+describe('POST - /api/categories', () => {
   test('should add a new category to the categories table and return the newly created category object', async () => {
     const {
       body: { category },
@@ -131,7 +131,7 @@ describe("GET - /api/users/:username", () => {
       body: { message },
     } = await request(app).get("/api/users/dog").expect(404);
 
-    expect(message).toBe("User does not exist");
+    expect(message).toBe("User not found");
   });
 });
 
@@ -291,7 +291,7 @@ describe("GET - /api/reviews/:review_id", () => {
       body: { message },
     } = await request(app).get("/api/reviews/100").expect(404);
 
-    expect(message).toBe("Review does not exist");
+    expect(message).toBe("Review not found");
   });
 });
 
@@ -383,7 +383,7 @@ describe("GET - /api/reviews/:review_id/comments", () => {
 
     expect(comments).toHaveLength(0);
   });
-  test.skip("should return a 404 and a custom message when trying to access the comments of a review that doesn't exist in the database", async () => {
+  test("should return a 404 and a custom message when trying to access the comments of a review that doesn't exist in the database", async () => {
     const {
       body: { message },
     } = await request(app).get("/api/reviews/15/comments").expect(404);
@@ -395,7 +395,7 @@ describe("GET - /api/reviews/:review_id/comments", () => {
       body: { message },
     } = await request(app).get("/api/reviews/seven/comments").expect(400);
 
-    expect(message).toBe("Invalid datatype");
+    expect(message).toBe("Bad request");
   });
 });
 

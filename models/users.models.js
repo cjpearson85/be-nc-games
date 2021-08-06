@@ -16,7 +16,7 @@ exports.selectUserByUsername = async (username) => {
   );
 
   if (!rows[0]) {
-    return Promise.reject({ status: 404, message: "User does not exist" });
+    return Promise.reject({ status: 404, message: "User not found" });
   }
   
   return rows[0];

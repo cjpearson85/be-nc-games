@@ -94,7 +94,7 @@ exports.selectReviewById = async (review_id) => {
     [review_id]
   );
   if (!rows[0]) {
-    return Promise.reject({ status: 404, message: "Review does not exist" });
+    return Promise.reject({ status: 404, message: "Review not found" });
   }
   return rows[0];
 };
