@@ -1,4 +1,5 @@
 const db = require("../db/connection.js");
+const { insertToTable } = require("../db/utils/sql-queries.js");
 
 exports.selectCommentsByReviewId = async (review_id, queries) => {
   const { sort_by, order, limit, p } = queries;
@@ -47,9 +48,11 @@ exports.selectCommentsByReviewId = async (review_id, queries) => {
 };
 
 exports.insertCommentByReviewId = async (review_id, body) => {
-  const { author, body: review_body } = body;
+  body.review_id = review_id;
+  const columns = Object.keys(body);
+  const values = Object.values(body);
 
-  if (!author || !review_body) {
+  if (values.some(el => el === undefined)) {
     return Promise.reject({ status: 400, message: "Missing required fields" });
   }
 
@@ -57,18 +60,10 @@ exports.insertCommentByReviewId = async (review_id, body) => {
     return Promise.reject({ status: 400, message: "Bad request" });
   }
 
-  let queryStr = `
-    INSERT INTO comments
-    (author, review_id, body)
-    VALUES
-    ($1, $2, $3)
-    RETURNING *;`;
+  let queryStr = insertToTable("comments", columns, [values]);
+  queryStr += `RETURNING *;`;
 
-  const { rows } = await db.query(queryStr, [
-    author,
-    review_id,
-    review_body
-  ]);
+  const { rows } = await db.query(queryStr);
 
   return rows[0];
 };
