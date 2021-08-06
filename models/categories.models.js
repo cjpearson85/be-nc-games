@@ -1,4 +1,5 @@
 const db = require("../db/connection.js");
+const { insertToTable } = require("../db/utils/sql-queries.js");
 
 exports.selectCategories = async () => {
   const { rows } = await db.query(
@@ -8,20 +9,17 @@ exports.selectCategories = async () => {
 };
 
 exports.insertCategory = async (body) => {
-  const { slug, description } = body;
+  const columns = Object.keys(body);
+  const values = [Object.values(body)];
 
-  if (!slug) {
+  if (!columns.includes('slug')) {
     return Promise.reject({ status: 400, message: "No slug on POST body" });
   }
 
-  let queryStr = `
-    INSERT INTO categories
-    (slug, description)
-    VALUES
-    ($1, $2)
-    RETURNING *`;
+  let queryStr = insertToTable('categories', columns, values);
+  queryStr += ` RETURNING *`;
 
-  const { rows } = await db.query(queryStr, [slug, description]);
+  const { rows } = await db.query(queryStr);
 
   return rows[0];
 };

@@ -46,7 +46,7 @@ describe("GET - /api/categories", () => {
   });
 });
 
-describe("POST - /api/categories", () => {
+describe.only("POST - /api/categories", () => {
   test("should add a new category to the categories table and return the newly created category object", async () => {
     const {
       body: { category },
