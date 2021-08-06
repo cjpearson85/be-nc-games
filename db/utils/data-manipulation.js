@@ -32,3 +32,9 @@ exports.commentsFormatter = (commentData, refObj) => {
         return [comment.created_by, refObj[comment.belongs_to], comment.votes, comment.created_at, comment.body]
     })
 }
+
+exports.valuesFormatter = (data, columns) => {
+  return data.map(object => {
+    return columns.map(column => object[column])
+  })
+}
