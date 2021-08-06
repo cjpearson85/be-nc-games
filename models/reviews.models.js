@@ -120,9 +120,19 @@ exports.updateReviewById = async (review_id, body) => {
 };
 
 exports.removeReviewById = async (review_id) => {
-  return db.query(`
+  if (Object.is(parseInt(review_id), NaN)) {
+    return Promise.reject({ status: 400, message: "Bad request" });
+  }
+
+  const { rows } = await db.query(`
     DELETE FROM reviews
-    WHERE review_id = $1;`,
+    WHERE review_id = $1
+    RETURNING review_id;`,
     [review_id]
   );
+
+  if (!rows[0]) {
+    return Promise.reject({ status: 404, message: "Review does not exist" });
+  }
+  return rows[0];
 }

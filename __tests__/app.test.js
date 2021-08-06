@@ -381,6 +381,25 @@ describe("DELETE - /api/reviews/:review_id", () => {
         expect(rows).toHaveLength(0);
       });
   });
+  test("should return a 400 and custom message when passed an invalid review_id", async () => {
+    const {
+      body: { message },
+    } = await request(app)
+      .delete("/api/reviews/seven")
+      .expect(400);
+
+    expect(message).toBe("Bad request");
+  });
+  test("should return a 404 and a custom message when trying to delete a review that doesn't exist", async () => {
+    const {
+      body: { message },
+    } = await request(app)
+      .delete("/api/reviews/15")
+      .expect(404);
+
+    expect(message).toBe("Review does not exist");
+  });
+
 });
 
 describe("GET - /api/reviews/:review_id/comments", () => {
@@ -583,7 +602,7 @@ describe("PATCH - /api/comments/:comment_id", () => {
   });
 });
 
-describe.only("DELETE - /api/comments/:comment_id", () => {
+describe("DELETE - /api/comments/:comment_id", () => {
   test("should remove the specified comment from the database", () => {
     return request(app)
       .delete("/api/comments/6")
