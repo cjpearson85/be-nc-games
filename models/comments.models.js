@@ -1,18 +1,30 @@
 const db = require("../db/connection.js");
 
 exports.selectCommentsByReviewId = async (review_id, queries) => {
-  const { limit, p } = queries;
+  const { sort_by, order, limit, p } = queries;
   const queryValues = [review_id];
+
+  const validSortBy = [
+    "comment_id",
+    "author",
+    "created_at",
+    "votes"
+  ];
+  const validOrder = ["asc", "desc"];
+
+  if (!validSortBy.includes(sort_by) || !validOrder.includes(order)) {
+    return Promise.reject({ status: 400, message: "bad request" });
+  }
 
   let queryStr = `
     SELECT comment_id, votes, created_at, author, body 
     FROM comments
     WHERE review_id = $1 
-    ORDER BY created_at ASC `;
+    ORDER BY ${sort_by} ${order}`;
 
   const { rowCount } = await db.query(queryStr, queryValues);
   
-  queryStr += `LIMIT $2 OFFSET $3;`;
+  queryStr += ` LIMIT $2 OFFSET $3;`;
 
   const offset = (p - 1) * limit;
   queryValues.push(limit);

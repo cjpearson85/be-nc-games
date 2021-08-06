@@ -246,7 +246,7 @@ describe("GET - /api/reviews/:review_id", () => {
       body: { message },
     } = await request(app).get("/api/reviews/not_an_id").expect(400);
 
-    expect(message).toBe("Invalid review_id");
+    expect(message).toBe("Invalid datatype");
   });
   test("should return a 404 if an passed a valid review_id that doesn't exist in the database", async () => {
     const {
@@ -299,7 +299,7 @@ describe("DELETE - /api/reviews/:review_id", () => {
 });
 
 describe("GET - /api/reviews/:review_id/comments", () => {
-  test("should return an array of all the comments for a specific review", async () => {
+  test("should return an array of all the comments for a specific review, ordered by date descending by default", async () => {
     const {
       body: { comments },
     } = await request(app).get("/api/reviews/2/comments").expect(200);
@@ -315,6 +315,16 @@ describe("GET - /api/reviews/:review_id/comments", () => {
         body: expect.any(String),
       });
     });
+    expect(comments).toBeSortedBy("created_at", { descending: true });
+  });
+  test("should return an array of review objects, ordered by the specified parameters", async () => {
+    const {
+      body: { comments },
+    } = await request(app)
+      .get("/api/reviews/2/comments?sort_by=votes&order=asc")
+      .expect(200);
+
+    expect(comments).toBeSortedBy("votes", { ascending: true });
   });
   test("should return only the number of comments specified by the limit", async () => {
     const {
@@ -347,7 +357,7 @@ describe("GET - /api/reviews/:review_id/comments", () => {
       body: { message },
     } = await request(app).get("/api/reviews/seven/comments").expect(400);
 
-    expect(message).toBe("Invalid review_id");
+    expect(message).toBe("Invalid datatype");
   });
 });
 

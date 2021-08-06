@@ -7,9 +7,10 @@ const {
 
 exports.getCommentsByReviewId = (req, res, next) => {
   const { review_id } = req.params;
-  const { limit = 10, p = 1 } = req.query;
+  const { sort_by = "created_at",
+  order = "desc", limit = 10, p = 1 } = req.query;
   
-  selectCommentsByReviewId(review_id, { limit, p })
+  selectCommentsByReviewId(review_id, { sort_by, order, limit, p })
     .then(({ rows: comments, rowCount: total_count }) => {
       res.status(200).send({ total_count, comments });
     })
