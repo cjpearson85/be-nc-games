@@ -353,6 +353,16 @@ describe("PATCH - /api/reviews/:review_id", () => {
 
     expect(review.votes).toBe(80);
   });
+  test("should return a 400 and custom message when a required input field is missing", async () => {
+    const {
+      body: { message },
+    } = await request(app)
+      .patch("/api/reviews/12")
+      .send({})
+      .expect(400);
+
+    expect(message).toBe("Missing required fields");
+  });
   test("should return a 404 if an passed a valid review_id that doesn't exist in the database", async () => {
     const {
       body: { message },
@@ -363,6 +373,17 @@ describe("PATCH - /api/reviews/:review_id", () => {
 
     expect(message).toBe("Review does not exist");
   });
+  test("should return a 400 and custom message when passed an invalid review_id", async () => {
+    const {
+      body: { message },
+    } = await request(app)
+      .patch("/api/reviews/seven")
+      .send({ inc_votes: 1 })
+      .expect(400);
+
+    expect(message).toBe("Bad request");
+  });
+
 });
 
 describe("DELETE - /api/reviews/:review_id", () => {

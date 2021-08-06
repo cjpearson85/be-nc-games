@@ -105,6 +105,12 @@ exports.selectReviewById = async (review_id) => {
 };
 
 exports.updateReviewById = async (review_id, body) => {
+  if (Object.is(parseInt(review_id), NaN)) {
+    return Promise.reject({ status: 400, message: "Bad request" });
+  } else if (!body.inc_votes) {
+    return Promise.reject({ status: 400, message: "Missing required fields" });
+  }
+
   const { rows } = await db.query(
     `UPDATE reviews
     SET votes = votes + $1
