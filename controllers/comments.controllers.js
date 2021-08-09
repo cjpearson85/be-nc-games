@@ -38,7 +38,10 @@ exports.deleteCommentById = (req, res, next) => {
     .then(() => {
       res.status(204).send();
     })
-    .catch(next);
+    .catch(err => {
+      if (!err.message) err.message = "Comment not found";
+      next(err);
+    });
 };
 
 exports.patchCommentById = (req, res, next) => {
@@ -48,5 +51,8 @@ exports.patchCommentById = (req, res, next) => {
     .then((comment) => {
       res.status(200).send({ comment });
     })
-    .catch(next);
+    .catch(err => {
+      if (!err.message) err.message = "Comment not found";
+      next(err);
+    });
 };

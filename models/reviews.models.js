@@ -1,5 +1,6 @@
 const db = require("../db/connection.js");
 const { insertToTable } = require("../db/utils/sql-queries.js");
+const { getSingleResult } = require("../helper-functions.js");
 
 exports.selectReviews = async ({ sort_by, order, category, limit, p }) => {
   const validSortBy = [
@@ -66,33 +67,27 @@ exports.insertReview = async (body) => {
   const columns = Object.keys(body);
   const values = Object.values(body);
 
-  if (values.some(el => el === undefined)) {
+  if (values.some((el) => el === undefined)) {
     return Promise.reject({ status: 400, message: "Missing required fields" });
   }
 
   let queryStr = insertToTable("reviews", columns, [values]);
   queryStr += `RETURNING review_id`;
 
-  const result = await db.query(queryStr);
-
-  const { review_id } = result.rows[0];
+  const { review_id } = await getSingleResult(queryStr);
 
   return this.selectReviewById(review_id);
 };
 
 exports.selectReviewById = async (review_id) => {
-  const { rows } = await db.query(
-    `SELECT owner, title, reviews.review_id, review_body, designer, review_img_url, category, reviews.created_at, reviews.votes, COUNT(comment_id) AS comment_count
+  let queryStr = `
+    SELECT owner, title, reviews.review_id, review_body, designer, review_img_url, category, reviews.created_at, reviews.votes, COUNT(comment_id) AS comment_count
     FROM reviews
     LEFT JOIN comments ON reviews.review_id = comments.review_id
     WHERE reviews.review_id = $1
-    GROUP BY reviews.review_id;`,
-    [review_id]
-  );
-  if (!rows[0]) {
-    return Promise.reject({ status: 404, message: "Review not found" });
-  }
-  return rows[0];
+    GROUP BY reviews.review_id;
+    `;
+  return getSingleResult(queryStr, [review_id])
 };
 
 exports.updateReviewById = async (review_id, body) => {
@@ -102,18 +97,13 @@ exports.updateReviewById = async (review_id, body) => {
     return Promise.reject({ status: 400, message: "Missing required fields" });
   }
 
-  const { rows } = await db.query(
-    `UPDATE reviews
+  return getSingleResult(`
+    UPDATE reviews
     SET votes = votes + $1
     WHERE review_id = $2
     RETURNING *`,
     [body.inc_votes, review_id]
   );
-  if (!rows[0]) {
-    return Promise.reject({ status: 404, message: "Review does not exist" });
-  }
-  return rows[0];
-  // Update this to make sure votes doesn't become a negative number
 };
 
 exports.removeReviewById = async (review_id) => {
@@ -121,15 +111,10 @@ exports.removeReviewById = async (review_id) => {
     return Promise.reject({ status: 400, message: "Bad request" });
   }
 
-  const { rows } = await db.query(`
+  return getSingleResult(`
     DELETE FROM reviews
     WHERE review_id = $1
     RETURNING review_id;`,
     [review_id]
   );
-
-  if (!rows[0]) {
-    return Promise.reject({ status: 404, message: "Review does not exist" });
-  }
-  return rows[0];
-}
+};

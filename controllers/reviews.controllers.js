@@ -39,7 +39,10 @@ exports.getReviewById = (req, res, next) => {
     .then((review) => {
       res.status(200).send({ review });
     })
-    .catch(next);
+    .catch(err => {
+      if (!err.message) err.message = "Review not found";
+      next(err);
+    });
 };
 
 exports.patchReviewById = (req, res, next) => {
@@ -50,7 +53,10 @@ exports.patchReviewById = (req, res, next) => {
     .then((review) => {
       res.status(200).send({ review });
     })
-    .catch(next);
+    .catch(err => {
+      if (!err.message) err.message = "Review not found";
+      next(err);
+    });
 };
 
 exports.deleteReviewById = (req, res, next) => {
@@ -59,5 +65,8 @@ exports.deleteReviewById = (req, res, next) => {
     .then(() => {
       res.status(204).send();
     })
-    .catch(next);
+    .catch(err => {
+      if (!err.message) err.message = "Review not found";
+      next(err);
+    });
 };

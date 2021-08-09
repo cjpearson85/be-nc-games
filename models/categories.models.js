@@ -1,11 +1,10 @@
 const db = require("../db/connection.js");
 const { insertToTable } = require("../db/utils/sql-queries.js");
+const { getSingleResult, getMultipleResults } = require("../helper-functions.js");
 
 exports.selectCategories = async () => {
-  const { rows } = await db.query(
-    `SELECT * FROM categories ORDER BY slug ASC;`
-  );
-  return rows;
+  let queryStr = `SELECT * FROM categories ORDER BY slug ASC;`;
+  return getMultipleResults(queryStr);
 };
 
 exports.insertCategory = async (body) => {
@@ -19,7 +18,5 @@ exports.insertCategory = async (body) => {
   let queryStr = insertToTable("categories", columns, [values]);
   queryStr += ` RETURNING *`;
 
-  const { rows } = await db.query(queryStr);
-
-  return rows[0];
+  return getSingleResult(queryStr);
 };

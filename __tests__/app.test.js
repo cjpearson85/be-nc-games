@@ -371,7 +371,7 @@ describe("PATCH - /api/reviews/:review_id", () => {
       .send({ inc_votes: 20 })
       .expect(404);
 
-    expect(message).toBe("Review does not exist");
+    expect(message).toBe("Review not found");
   });
   test("should return a 400 and custom message when passed an invalid review_id", async () => {
     const {
@@ -418,9 +418,8 @@ describe("DELETE - /api/reviews/:review_id", () => {
       .delete("/api/reviews/15")
       .expect(404);
 
-    expect(message).toBe("Review does not exist");
+    expect(message).toBe("Review not found");
   });
-
 });
 
 describe("GET - /api/reviews/:review_id/comments", () => {
@@ -609,7 +608,7 @@ describe("PATCH - /api/comments/:comment_id", () => {
       .send({ inc_votes: 1 })
       .expect(404);
 
-    expect(message).toBe("Comment does not exist");
+    expect(message).toBe("Comment not found");
   });
   test("should return a 400 and custom message when passed an invalid comment_id", async () => {
     const {
@@ -651,6 +650,6 @@ describe("DELETE - /api/comments/:comment_id", () => {
       .delete("/api/comments/7")
       .expect(404);
 
-    expect(message).toBe("Comment does not exist");
+    expect(message).toBe("Comment not found");
   });
 });

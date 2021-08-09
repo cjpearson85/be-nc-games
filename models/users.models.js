@@ -1,23 +1,18 @@
 const db = require("../db/connection.js");
+const { getSingleResult, getMultipleResults } = require("../helper-functions.js");
 
 exports.selectUsers = async () => {
-  const { rows } = await db.query(`
-    SELECT * FROM users
-    ORDER BY username ASC;
-  `);
-  return rows;
+  queryStr = `
+  SELECT * FROM users
+  ORDER BY username ASC;
+  `
+  return getMultipleResults(queryStr)
 };
 
 exports.selectUserByUsername = async (username) => {
-  const { rows } = await db.query(`
-    SELECT * FROM users
-    WHERE username = $1;
-  `, [username]
-  );
-
-  if (!rows[0]) {
-    return Promise.reject({ status: 404, message: "User not found" });
-  }
-  
-  return rows[0];
+  queryStr = `
+  SELECT * FROM users
+  WHERE username = $1;
+  `
+  return getSingleResult(queryStr, [username])
 };

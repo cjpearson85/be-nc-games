@@ -1,5 +1,6 @@
 const db = require("../db/connection.js");
 const { insertToTable } = require("../db/utils/sql-queries.js");
+const { getSingleResult } = require("../helper-functions.js");
 
 exports.selectCommentsByReviewId = async (review_id, queries) => {
   const { sort_by, order, limit, p } = queries;
@@ -63,9 +64,7 @@ exports.insertCommentByReviewId = async (review_id, body) => {
   let queryStr = insertToTable("comments", columns, [values]);
   queryStr += `RETURNING *;`;
 
-  const { rows } = await db.query(queryStr);
-
-  return rows[0];
+  return getSingleResult(queryStr);
 };
 
 exports.removeCommentById = async (comment_id) => {
@@ -73,17 +72,12 @@ exports.removeCommentById = async (comment_id) => {
     return Promise.reject({ status: 400, message: "Bad request" });
   }
 
-  const { rows } = await db.query(`
+  return getSingleResult(`
     DELETE FROM comments
     WHERE comment_id = $1
     RETURNING comment_id;`,
     [comment_id]
   );
-
-  if (!rows[0]) {
-    return Promise.reject({ status: 404, message: "Comment does not exist" });
-  }
-  return rows[0];
 };
 
 exports.updateCommentById = async (comment_id, body) => {
@@ -93,15 +87,11 @@ exports.updateCommentById = async (comment_id, body) => {
     return Promise.reject({ status: 400, message: "Missing required fields" });
   }
 
-  const { rows } = await db.query(
-    `UPDATE comments
+  return getSingleResult(`
+    UPDATE comments
     SET votes = votes + $1
     WHERE comment_id = $2
     RETURNING *`,
     [body.inc_votes, comment_id]
   );
-  if (!rows[0]) {
-    return Promise.reject({ status: 404, message: "Comment does not exist" });
-  }
-  return rows[0];
 };
