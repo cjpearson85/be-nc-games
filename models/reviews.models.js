@@ -8,6 +8,7 @@ exports.selectReviews = async ({
   order,
   category,
   title,
+  created_at,
   limit,
   p,
 }) => {
@@ -58,6 +59,18 @@ exports.selectReviews = async ({
       queryStr += ` AND title ILIKE $${queryCount}`;
     }
     queryValues.push(titleInsert);
+    queryCount++;
+  }
+
+  if (created_at) {
+    let tenMinutesAgo = new Date(Date.now() - created_at);
+
+    if (queryCount === 1) {
+      queryStr += ` WHERE reviews.created_at > $${queryCount}`;
+    } else {
+      queryStr += ` AND reviews.created_at > $${queryCount}`;
+    }
+    queryValues.push(tenMinutesAgo);
     queryCount++;
   }
 

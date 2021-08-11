@@ -310,7 +310,7 @@ describe("GET - /api/reviews", () => {
     expect(reviews).toHaveLength(1);
     expect(reviews[0].review_id).toBe(2);
   });
-  test("should return an array of review objects, filtered by the specified category", async () => {
+  test("should return an empty array if given a category that is in the db but has no associated reviews", async () => {
     const {
       body: { reviews },
     } = await request(app)
@@ -381,6 +381,25 @@ describe("GET - /api/reviews", () => {
     expect(Array.isArray(reviews)).toBe(true);
     expect(reviews).toHaveLength(5);
     expect(total_count).toBe(13);
+  });
+  test('should return all the reviews created in the last 10 minutes', async () => {
+    await request(app)
+      .post("/api/reviews")
+      .send({
+        owner: "dav3rid",
+        title: "test_title",
+        review_body: "test_body",
+        designer: "Gamey McGameface",
+        category: "dexterity",
+        created_at: new Date(Date.now() - 540000)
+      })
+
+    const {
+      body: { reviews, total_count },
+    } = await request(app).get("/api/reviews?created_at=600000").expect(200);
+
+    expect(total_count).toBe(1);
+    expect(reviews[0].review_id).toBe(14);
   });
 });
 

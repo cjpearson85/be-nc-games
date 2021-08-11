@@ -7,12 +7,13 @@ const {
 } = require("../models/reviews.models");
 
 exports.getReviews = (req, res, next) => {
-  const { sort_by, order, category, title, limit, p } = req.query;
+  const { sort_by, order, category, title, created_at, limit, p } = req.query;
   const queries = {
     sort_by: sort_by || "created_at",
     order: order || "desc",
     category,
     title,
+    created_at,
     limit: limit || 10,
     p: p || 1,
   };
@@ -40,7 +41,7 @@ exports.getReviewById = (req, res, next) => {
     .then((review) => {
       res.status(200).send({ review });
     })
-    .catch(err => {
+    .catch((err) => {
       if (!err.message) err.message = "Review not found";
       next(err);
     });
@@ -50,11 +51,11 @@ exports.patchReviewById = (req, res, next) => {
   const { review_id } = req.params;
   const { review_body, inc_votes: votes } = req.body;
 
-  updateReviewById(review_id, {review_body, votes})
+  updateReviewById(review_id, { review_body, votes })
     .then((review) => {
       res.status(200).send({ review });
     })
-    .catch(err => {
+    .catch((err) => {
       if (!err.message) err.message = "Review not found";
       next(err);
     });
@@ -66,7 +67,7 @@ exports.deleteReviewById = (req, res, next) => {
     .then(() => {
       res.status(204).send();
     })
-    .catch(err => {
+    .catch((err) => {
       if (!err.message) err.message = "Review not found";
       next(err);
     });
