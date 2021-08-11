@@ -112,6 +112,31 @@ describe("GET - /api/users", () => {
   });
 });
 
+describe('POST - /api/users', () => {
+  test('should add a new user to the database and return the newly created user object ', () => {
+    const {
+      body: { user },
+    } = await request(app)
+      .post("/api/users")
+      .send({
+        username: 'test_username',
+        avatar_url: 'https://fakeurl.com/test.png',
+        name: 'John Doe'
+      })
+      .expect(201);
+
+    expect(user).toMatchObject({
+      username: 'test_username',
+      avatar_url: 'https://fakeurl.com/test.png',
+      name: 'John Doe'
+    });
+
+    const { rowCount } = await db.query(`SELECT * FROM users`);
+    expect(rowCount).toBe(5);
+
+  });
+});
+
 describe("GET - /api/users/:username", () => {
   test("should return a user object matching the associated username", async () => {
     const {
@@ -135,14 +160,18 @@ describe("GET - /api/users/:username", () => {
   });
 });
 
-describe.only("GET - /api/reviews", () => {
+describe('PATCH - /api/users/:username', () => {
+  
+});
+
+describe("GET - /api/reviews", () => {
   test("should return an array of review objects, ordered by date descending by default", async () => {
     const {
-      body: { reviews },
-    } = await request(app).get("/api/reviews?limit=15").expect(200);
+      body: { reviews, total_count },
+    } = await request(app).get("/api/reviews").expect(200);
 
     expect(Array.isArray(reviews)).toBe(true);
-    expect(reviews).toHaveLength(13);
+    expect(total_count).toBe(13);
     reviews.forEach((review) => {
       expect(review).toMatchObject({
         owner: expect.any(String),
@@ -174,10 +203,21 @@ describe.only("GET - /api/reviews", () => {
     expect(reviews).toHaveLength(1);
     expect(reviews[0].review_id).toBe(2);
   });
+  test("should return an array of review objects, filtered by the specified category", async () => {
+    const {
+      body: { reviews },
+    } = await request(app).get("/api/reviews?category=children's%20games").expect(200);
+
+    expect(reviews).toHaveLength(0);
+  });
   test("should return an array of review objects, filtered by the specified title", async () => {
     const {
       body: { reviews },
-    } = await request(app).get("/api/reviews?title=werewolf&category=social deduction&sort_by=review_id").expect(200);
+    } = await request(app)
+      .get(
+        "/api/reviews?title=werewolf&category=social deduction&sort_by=review_id"
+      )
+      .expect(200);
 
     expect(reviews).toHaveLength(2);
     expect(reviews[0].review_id).toBe(8);
@@ -357,20 +397,40 @@ describe("PATCH - /api/reviews/:review_id", () => {
       body: { review },
     } = await request(app)
       .patch("/api/reviews/12")
+      .send({ inc_votes: 20 })
+      .expect(200);
+
+    expect(review.votes).toBe(120);
+  });
+  test("should update the votes field by the specified amount and return the amended review--should work with negative values too", async () => {
+    const {
+      body: { review },
+    } = await request(app)
+      .patch("/api/reviews/12")
       .send({ inc_votes: -20 })
       .expect(200);
 
     expect(review.votes).toBe(80);
   });
+  test('should update the review body if passed the relevant field', async () => {
+    
+  });
   test("should return a 400 and custom message when a required input field is missing", async () => {
+    const {
+      body: { message },
+    } = await request(app).patch("/api/reviews/12").send({}).expect(400);
+
+    expect(message).toBe("Missing required fields");
+  });
+  test("should return a 400 and custom message when input field is of the incorrect datatype", async () => {
     const {
       body: { message },
     } = await request(app)
       .patch("/api/reviews/12")
-      .send({})
+      .send({ inc_votes: "twenty" })
       .expect(400);
 
-    expect(message).toBe("Missing required fields");
+    expect(message).toBe("Invalid datatype");
   });
   test("should return a 404 if an passed a valid review_id that doesn't exist in the database", async () => {
     const {
@@ -392,7 +452,6 @@ describe("PATCH - /api/reviews/:review_id", () => {
 
     expect(message).toBe("Bad request");
   });
-
 });
 
 describe("DELETE - /api/reviews/:review_id", () => {
@@ -414,18 +473,14 @@ describe("DELETE - /api/reviews/:review_id", () => {
   test("should return a 400 and custom message when passed an invalid review_id", async () => {
     const {
       body: { message },
-    } = await request(app)
-      .delete("/api/reviews/seven")
-      .expect(400);
+    } = await request(app).delete("/api/reviews/seven").expect(400);
 
     expect(message).toBe("Bad request");
   });
   test("should return a 404 and a custom message when trying to delete a review that doesn't exist", async () => {
     const {
       body: { message },
-    } = await request(app)
-      .delete("/api/reviews/15")
-      .expect(404);
+    } = await request(app).delete("/api/reviews/15").expect(404);
 
     expect(message).toBe("Review not found");
   });
@@ -602,10 +657,7 @@ describe("PATCH - /api/comments/:comment_id", () => {
   test("should return a 400 and custom message when a required input field is missing", async () => {
     const {
       body: { message },
-    } = await request(app)
-      .patch("/api/comments/6")
-      .send({})
-      .expect(400);
+    } = await request(app).patch("/api/comments/6").send({}).expect(400);
 
     expect(message).toBe("Missing required fields");
   });
@@ -646,18 +698,14 @@ describe("DELETE - /api/comments/:comment_id", () => {
   test("should return a 400 and custom message when passed an invalid comment_id", async () => {
     const {
       body: { message },
-    } = await request(app)
-      .delete("/api/comments/seven")
-      .expect(400);
+    } = await request(app).delete("/api/comments/seven").expect(400);
 
     expect(message).toBe("Bad request");
   });
   test("should return a 404 and a custom message when trying to delete a comment that doesn't exist", async () => {
     const {
       body: { message },
-    } = await request(app)
-      .delete("/api/comments/7")
-      .expect(404);
+    } = await request(app).delete("/api/comments/7").expect(404);
 
     expect(message).toBe("Comment not found");
   });

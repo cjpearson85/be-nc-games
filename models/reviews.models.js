@@ -26,10 +26,10 @@ exports.selectReviews = async ({
     return Promise.reject({ status: 400, message: "bad request" });
   }
 
-  const { rows: categories } = await db.query(`SELECT category FROM reviews;`);
+  const { rows: categories } = await db.query(`SELECT slug FROM categories;`);
 
   if (
-    !categories.map((row) => row.category).includes(category) &&
+    !categories.map((row) => row.slug).includes(category) &&
     category !== undefined
   ) {
     return Promise.reject({ status: 404, message: "Category not found" });
