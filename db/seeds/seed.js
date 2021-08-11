@@ -33,11 +33,11 @@ const seed = async (data) => {
       title VARCHAR(100) NOT NULL,
       review_body TEXT NOT NULL,
       designer VARCHAR(100) NOT NULL,
-      review_img_url TEXT DEFAULT 'https://images.pexels.com/photos/163064/play-stone-network-networked-interactive-163064.jpeg',
-      votes INT DEFAULT 0,
-      category VARCHAR(100) REFERENCES categories(slug),
-      owner VARCHAR(100) REFERENCES users(username),
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      review_img_url TEXT DEFAULT 'https://images.pexels.com/photos/163064/play-stone-network-networked-interactive-163064.jpeg' NOT NULL,
+      votes INT DEFAULT 0 NOT NULL,
+      category VARCHAR(100) REFERENCES categories(slug) NOT NULL,
+      owner VARCHAR(100) REFERENCES users(username) NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
     )`);
 
   await db.query(`
@@ -45,8 +45,8 @@ const seed = async (data) => {
       comment_id SERIAL PRIMARY KEY,
       author VARCHAR(100) REFERENCES users(username) NOT NULL,
       review_id INT REFERENCES reviews(review_id) ON DELETE CASCADE NOT NULL,
-      votes INT DEFAULT 0,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      votes INT DEFAULT 0 NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
       body TEXT
     )`);
 
