@@ -135,7 +135,7 @@ describe("GET - /api/users/:username", () => {
   });
 });
 
-describe("GET - /api/reviews", () => {
+describe.only("GET - /api/reviews", () => {
   test("should return an array of review objects, ordered by date descending by default", async () => {
     const {
       body: { reviews },
@@ -173,6 +173,15 @@ describe("GET - /api/reviews", () => {
 
     expect(reviews).toHaveLength(1);
     expect(reviews[0].review_id).toBe(2);
+  });
+  test("should return an array of review objects, filtered by the specified title", async () => {
+    const {
+      body: { reviews },
+    } = await request(app).get("/api/reviews?title=werewolf&category=social deduction&sort_by=review_id").expect(200);
+
+    expect(reviews).toHaveLength(2);
+    expect(reviews[0].review_id).toBe(8);
+    expect(reviews[1].review_id).toBe(3);
   });
   test('should return 400 status code and a message of "bad request" if provided an invalid column to sort by', async () => {
     const {

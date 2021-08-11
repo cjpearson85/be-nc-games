@@ -2,7 +2,14 @@ const db = require("../db/connection.js");
 const { insertToTable } = require("../db/utils/sql-queries.js");
 const { getSingleResult } = require("../helper-functions.js");
 
-exports.selectReviews = async ({ sort_by, order, category, limit, p }) => {
+exports.selectReviews = async ({
+  sort_by,
+  order,
+  category,
+  title,
+  limit,
+  p,
+}) => {
   const validSortBy = [
     "owner",
     "title",
@@ -26,7 +33,7 @@ exports.selectReviews = async ({ sort_by, order, category, limit, p }) => {
     category !== undefined
   ) {
     return Promise.reject({ status: 404, message: "Category not found" });
-  }
+  } 
 
   let queryValues = [];
   let queryStr = `
@@ -39,6 +46,17 @@ exports.selectReviews = async ({ sort_by, order, category, limit, p }) => {
   if (category) {
     queryStr += ` WHERE category = $${queryCount}`;
     queryValues.push(category);
+    queryCount++;
+  } 
+  
+  if (title) {
+    const titleInsert = `%${title}%`;
+    if (queryCount === 1) {
+      queryStr += ` WHERE title ILIKE $${queryCount}`;
+    } else {
+      queryStr += ` AND title ILIKE $${queryCount}`;
+    }
+    queryValues.push(titleInsert);
     queryCount++;
   }
 
@@ -57,6 +75,8 @@ exports.selectReviews = async ({ sort_by, order, category, limit, p }) => {
 
   const offset = (p - 1) * limit;
   queryValues.push(offset);
+
+  // console.log(queryStr);
 
   const { rows } = await db.query(queryStr, queryValues);
 
@@ -87,7 +107,7 @@ exports.selectReviewById = async (review_id) => {
     WHERE reviews.review_id = $1
     GROUP BY reviews.review_id;
     `;
-  return getSingleResult(queryStr, [review_id])
+  return getSingleResult(queryStr, [review_id]);
 };
 
 exports.updateReviewById = async (review_id, body) => {
@@ -97,7 +117,8 @@ exports.updateReviewById = async (review_id, body) => {
     return Promise.reject({ status: 400, message: "Missing required fields" });
   }
 
-  return getSingleResult(`
+  return getSingleResult(
+    `
     UPDATE reviews
     SET votes = votes + $1
     WHERE review_id = $2
@@ -111,7 +132,8 @@ exports.removeReviewById = async (review_id) => {
     return Promise.reject({ status: 400, message: "Bad request" });
   }
 
-  return getSingleResult(`
+  return getSingleResult(
+    `
     DELETE FROM reviews
     WHERE review_id = $1
     RETURNING review_id;`,
