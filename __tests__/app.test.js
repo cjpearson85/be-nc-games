@@ -112,67 +112,68 @@ describe("GET - /api/users", () => {
   });
 });
 
-describe('POST - /api/users', () => {
-  test('should add a new user to the database and return the newly created user object ', async() => {
+describe("POST - /api/users", () => {
+  test("should add a new user to the database and return the newly created user object ", async () => {
     const {
       body: { user },
     } = await request(app)
       .post("/api/users")
       .send({
-        username: 'test_username',
-        avatar_url: 'https://fakeurl.com/test.png',
-        name: 'John Doe'
+        username: "test_username",
+        avatar_url: "https://fakeurl.com/test.png",
+        name: "John Doe",
       })
       .expect(201);
 
     expect(user).toMatchObject({
-      username: 'test_username',
-      avatar_url: 'https://fakeurl.com/test.png',
-      name: 'John Doe'
+      username: "test_username",
+      avatar_url: "https://fakeurl.com/test.png",
+      name: "John Doe",
     });
 
     const { rowCount } = await db.query(`SELECT * FROM users`);
     expect(rowCount).toBe(5);
-
   });
-  test('should return a 400 and message if provided username already exists', async () => {
+  test("should return a 400 and message if provided username already exists", async () => {
     const {
       body: { message },
     } = await request(app)
       .post("/api/users")
       .send({
-        username: 'philippaclaire9',
-        avatar_url: 'https://fakeurl.com/test.png',
-        name: 'John Doe'
+        username: "philippaclaire9",
+        avatar_url: "https://fakeurl.com/test.png",
+        name: "John Doe",
       })
       .expect(400);
 
-      expect(message).toBe('Duplicate key value violates unique constraint');
+    expect(message).toBe("Duplicate key value violates unique constraint");
   });
-  test('should ignore any additional fields beyond the specified ones', async() => {
+  test("should ignore any additional fields beyond the specified ones", async () => {
     const {
       body: { user },
     } = await request(app)
       .post("/api/users")
       .send({
-        username: 'test_username',
-        avatar_url: 'https://fakeurl.com/test.png',
-        name: 'John Doe',
-        address: '123 Fake Street',
+        username: "test_username",
+        avatar_url: "https://fakeurl.com/test.png",
+        name: "John Doe",
+        address: "123 Fake Street",
       })
       .expect(201);
 
     expect(user).toMatchObject({
-      username: 'test_username',
-      avatar_url: 'https://fakeurl.com/test.png',
-      name: 'John Doe'
+      username: "test_username",
+      avatar_url: "https://fakeurl.com/test.png",
+      name: "John Doe",
     });
-    expect(user).toEqual(expect.not.objectContaining({
-      username: 'test_username',
-      avatar_url: 'https://fakeurl.com/test.png',
-      name: 'John Doe',
-      address: '123 Fake Street'
-    }));
+    expect(user).toEqual(
+      expect.not.objectContaining({
+        username: "test_username",
+        avatar_url: "https://fakeurl.com/test.png",
+        name: "John Doe",
+        address: "123 Fake Street",
+      })
+    );
   });
   test("should return a 400 status code and message if missing any required input fields", async () => {
     const {
@@ -180,8 +181,8 @@ describe('POST - /api/users', () => {
     } = await request(app)
       .post("/api/users")
       .send({
-        avatar_url: 'https://fakeurl.com/test.png',
-        name: 'John Doe'
+        avatar_url: "https://fakeurl.com/test.png",
+        name: "John Doe",
       })
       .expect(400);
 
@@ -212,8 +213,62 @@ describe("GET - /api/users/:username", () => {
   });
 });
 
-describe('PATCH - /api/users/:username', () => {
-  
+describe("PATCH - /api/users/:username", () => {
+  test("should update the specified fields and return the amended user object", async () => {
+    const {
+      body: { user },
+    } = await request(app)
+      .patch("/api/users/philippaclaire9")
+      .send({
+        avatar_url: "https://fakeurl.com/test.png",
+        name: "John Doe",
+      })
+      .expect(200);
+
+    expect(user).toMatchObject({
+      username: "philippaclaire9",
+      avatar_url: "https://fakeurl.com/test.png",
+      name: "John Doe",
+    });
+  });
+  test("should not alter any fields not included in request body", async () => {
+    const {
+      body: { user },
+    } = await request(app)
+      .patch("/api/users/philippaclaire9")
+      .send({
+        avatar_url: "https://fakeurl.com/test.png",
+      })
+      .expect(200);
+
+    expect(user).toMatchObject({
+      username: "philippaclaire9",
+      avatar_url: "https://fakeurl.com/test.png",
+      name: "philippa",
+    });
+  });
+  test("should return 400 if given no valid fields to update", async () => {
+    const {
+      body: { message },
+    } = await request(app)
+      .patch("/api/users/philippaclaire9")
+      .send({})
+      .expect(400);
+
+    expect(message).toBe("Missing required fields");
+  });
+  test("should return a 404 if an passed a valid username that doesn't exist in the database", async () => {
+    const {
+      body: { message },
+    } = await request(app)
+      .patch("/api/users/dog")
+      .send({
+        avatar_url: "https://fakeurl.com/test.png",
+      })
+      .expect(404);
+
+    expect(message).toBe("User not found");
+  });
 });
 
 describe("GET - /api/reviews", () => {
@@ -258,7 +313,9 @@ describe("GET - /api/reviews", () => {
   test("should return an array of review objects, filtered by the specified category", async () => {
     const {
       body: { reviews },
-    } = await request(app).get("/api/reviews?category=children's%20games").expect(200);
+    } = await request(app)
+      .get("/api/reviews?category=children's%20games")
+      .expect(200);
 
     expect(reviews).toHaveLength(0);
   });
@@ -464,9 +521,7 @@ describe("PATCH - /api/reviews/:review_id", () => {
 
     expect(review.votes).toBe(80);
   });
-  test('should update the review body if passed the relevant field', async () => {
-    
-  });
+  test("should update the review body if passed the relevant field", async () => {});
   test("should return a 400 and custom message when a required input field is missing", async () => {
     const {
       body: { message },

@@ -1,3 +1,4 @@
+const format = require("pg-format");
 const db = require("../db/connection.js");
 const { insertToTable } = require("../db/utils/sql-queries.js");
 const {
@@ -29,4 +30,33 @@ exports.insertUser = async (body) => {
   queryStr += ` RETURNING *`;
 
   return getSingleResult(queryStr);
+};
+
+exports.updateUserByUsername = async (username, body) => {
+  let pairs = Object.entries(body).filter((pair) => {
+    const [, value] = pair;
+    return value;
+  });
+
+  if (pairs.length < 1) {
+    return Promise.reject({status: 400, message: 'Missing required fields'})
+  }
+ 
+  let queryStr = `
+    UPDATE users 
+    SET `;
+
+  pairs.forEach((pair, i) => {
+    const [key, value] = pair;
+    queryStr += format(`%I = %L, `, key, value);
+  });
+
+  queryStr = queryStr.slice(0, -2);
+
+  queryStr += `
+    WHERE username = $1
+    RETURNING *;
+  `;
+
+  return getSingleResult(queryStr, [username]);
 };
