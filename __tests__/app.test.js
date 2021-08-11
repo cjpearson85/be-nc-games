@@ -500,7 +500,7 @@ describe("GET - /api/reviews/:review_id", () => {
   });
 });
 
-describe.only("PATCH - /api/reviews/:review_id", () => {
+describe("PATCH - /api/reviews/:review_id", () => {
   test("should update the votes field by the specified amount and return the amended review", async () => {
     const {
       body: { review },
@@ -526,10 +526,9 @@ describe.only("PATCH - /api/reviews/:review_id", () => {
       body: { review },
     } = await request(app)
       .patch("/api/reviews/12")
-      .send({ inc_votes: 20, review_body: "Test" })
+      .send({ review_body: "Test" })
       .expect(200);
 
-    expect(review.votes).toBe(120);
     expect(review.review_body).toBe("Test");
   });
   test("should still work when updating multiple fields at once", async () => {
@@ -537,9 +536,10 @@ describe.only("PATCH - /api/reviews/:review_id", () => {
       body: { review },
     } = await request(app)
       .patch("/api/reviews/12")
-      .send({ review_body: "Test" })
+      .send({ inc_votes: 20, review_body: "Test" })
       .expect(200);
 
+    expect(review.votes).toBe(120);
     expect(review.review_body).toBe("Test");
   });
   test("should return a 400 and custom message when a required input field is missing", async () => {
@@ -772,7 +772,7 @@ describe("POST - /api/reviews/:review_id/comments", () => {
 });
 
 describe("PATCH - /api/comments/:comment_id", () => {
-  test("should update the specified comment from the database and return the amended comment", async () => {
+  test("should update the votes field by the specified amount and return the amended comment", async () => {
     const {
       body: { comment },
     } = await request(app)
@@ -781,12 +781,52 @@ describe("PATCH - /api/comments/:comment_id", () => {
       .expect(200);
     expect(comment.votes).toBe(11);
   });
+  test("should update the votes field by the specified amount and return the amended comment--should work with negative values too", async () => {
+    const {
+      body: { comment },
+    } = await request(app)
+      .patch("/api/comments/6")
+      .send({ inc_votes: -1 })
+      .expect(200);
+    expect(comment.votes).toBe(9);
+  });
+  test("should update the comment body if passed the relevant field", async () => {
+    const {
+      body: { comment },
+    } = await request(app)
+      .patch("/api/comments/6")
+      .send({ body: "Test" })
+      .expect(200);
+
+    expect(comment.body).toBe("Test");
+  });
+  test("should update the comment body if passed the relevant field", async () => {
+    const {
+      body: { comment },
+    } = await request(app)
+      .patch("/api/comments/6")
+      .send({ body: "Test", inc_votes: -1 })
+      .expect(200);
+
+    expect(comment.body).toBe("Test");
+    expect(comment.votes).toBe(9);
+  });
   test("should return a 400 and custom message when a required input field is missing", async () => {
     const {
       body: { message },
     } = await request(app).patch("/api/comments/6").send({}).expect(400);
 
     expect(message).toBe("Missing required fields");
+  });
+  test("should return a 400 and custom message when input field is of the incorrect datatype", async () => {
+    const {
+      body: { message },
+    } = await request(app)
+      .patch("/api/comments/6")
+      .send({ inc_votes: "twenty" })
+      .expect(400);
+
+    expect(message).toBe("Invalid datatype");
   });
   test("should return a 404 and a custom message when trying to update a comment that doesn't exist", async () => {
     const {
