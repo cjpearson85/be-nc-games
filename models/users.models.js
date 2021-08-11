@@ -46,7 +46,7 @@ exports.updateUserByUsername = async (username, body) => {
     UPDATE users 
     SET `;
 
-  pairs.forEach((pair, i) => {
+  pairs.forEach((pair) => {
     const [key, value] = pair;
     queryStr += format(`%I = %L, `, key, value);
   });
