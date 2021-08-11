@@ -5,6 +5,8 @@ exports.handle404s = (req, res, next) => {
 exports.handlePsqlErrors = (err, req, res, next) => {
   if (err.code === "22P02") {
     res.status(400).send({ message: "Invalid datatype" });
+  } else if (err.code === "23502") {
+    res.status(400).send({ message: "Missing required fields" });
   } else if (err.code === "23503") {
     res.status(404).send({ message: "Insert or update violates foreign key constraint" });
   } else if (err.code === "23505") {

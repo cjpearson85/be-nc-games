@@ -113,7 +113,7 @@ describe("GET - /api/users", () => {
 });
 
 describe('POST - /api/users', () => {
-  test('should add a new user to the database and return the newly created user object ', () => {
+  test('should add a new user to the database and return the newly created user object ', async() => {
     const {
       body: { user },
     } = await request(app)
@@ -134,6 +134,58 @@ describe('POST - /api/users', () => {
     const { rowCount } = await db.query(`SELECT * FROM users`);
     expect(rowCount).toBe(5);
 
+  });
+  test('should return a 400 and message if provided username already exists', async () => {
+    const {
+      body: { message },
+    } = await request(app)
+      .post("/api/users")
+      .send({
+        username: 'philippaclaire9',
+        avatar_url: 'https://fakeurl.com/test.png',
+        name: 'John Doe'
+      })
+      .expect(400);
+
+      expect(message).toBe('Duplicate key value violates unique constraint');
+  });
+  test('should ignore any additional fields beyond the specified ones', async() => {
+    const {
+      body: { user },
+    } = await request(app)
+      .post("/api/users")
+      .send({
+        username: 'test_username',
+        avatar_url: 'https://fakeurl.com/test.png',
+        name: 'John Doe',
+        address: '123 Fake Street',
+      })
+      .expect(201);
+
+    expect(user).toMatchObject({
+      username: 'test_username',
+      avatar_url: 'https://fakeurl.com/test.png',
+      name: 'John Doe'
+    });
+    expect(user).toEqual(expect.not.objectContaining({
+      username: 'test_username',
+      avatar_url: 'https://fakeurl.com/test.png',
+      name: 'John Doe',
+      address: '123 Fake Street'
+    }));
+  });
+  test("should return a 400 status code and message if missing any required input fields", async () => {
+    const {
+      body: { message },
+    } = await request(app)
+      .post("/api/users")
+      .send({
+        avatar_url: 'https://fakeurl.com/test.png',
+        name: 'John Doe'
+      })
+      .expect(400);
+
+    expect(message).toBe("Missing required fields");
   });
 });
 
