@@ -500,7 +500,7 @@ describe("GET - /api/reviews/:review_id", () => {
   });
 });
 
-describe("PATCH - /api/reviews/:review_id", () => {
+describe.only("PATCH - /api/reviews/:review_id", () => {
   test("should update the votes field by the specified amount and return the amended review", async () => {
     const {
       body: { review },
@@ -521,7 +521,27 @@ describe("PATCH - /api/reviews/:review_id", () => {
 
     expect(review.votes).toBe(80);
   });
-  test("should update the review body if passed the relevant field", async () => {});
+  test("should update the review body if passed the relevant field", async () => {
+    const {
+      body: { review },
+    } = await request(app)
+      .patch("/api/reviews/12")
+      .send({ inc_votes: 20, review_body: "Test" })
+      .expect(200);
+
+    expect(review.votes).toBe(120);
+    expect(review.review_body).toBe("Test");
+  });
+  test("should still work when updating multiple fields at once", async () => {
+    const {
+      body: { review },
+    } = await request(app)
+      .patch("/api/reviews/12")
+      .send({ review_body: "Test" })
+      .expect(200);
+
+    expect(review.review_body).toBe("Test");
+  });
   test("should return a 400 and custom message when a required input field is missing", async () => {
     const {
       body: { message },

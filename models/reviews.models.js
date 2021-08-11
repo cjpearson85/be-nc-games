@@ -1,3 +1,4 @@
+const format = require("pg-format");
 const db = require("../db/connection.js");
 const { insertToTable } = require("../db/utils/sql-queries.js");
 const { getSingleResult } = require("../helper-functions.js");
@@ -111,20 +112,38 @@ exports.selectReviewById = async (review_id) => {
 };
 
 exports.updateReviewById = async (review_id, body) => {
+  let pairs = Object.entries(body).filter((pair) => {
+    const [, value] = pair;
+    return value;
+  });
+  
   if (Object.is(parseInt(review_id), NaN)) {
     return Promise.reject({ status: 400, message: "Bad request" });
-  } else if (!body.inc_votes) {
+  } else if (pairs.length < 1) {
     return Promise.reject({ status: 400, message: "Missing required fields" });
   }
 
-  return getSingleResult(
-    `
-    UPDATE reviews
-    SET votes = votes + $1
-    WHERE review_id = $2
-    RETURNING *`,
-    [body.inc_votes, review_id]
-  );
+  let queryStr = `
+    UPDATE reviews 
+    SET `;
+
+  pairs.forEach((pair) => {
+    const [key, value] = pair;
+    if (key === 'votes') {
+      const newVotes = `${key} + ${value}`
+      queryStr += format(`votes = %s, `, newVotes);
+    } else {
+      queryStr += format(`%I = %L, `, key, value);
+    }
+  });
+
+  queryStr = queryStr.slice(0, -2);
+  queryStr += `
+    WHERE review_id = $1
+    RETURNING *;
+  `;
+
+  return getSingleResult(queryStr, [review_id]);
 };
 
 exports.removeReviewById = async (review_id) => {
