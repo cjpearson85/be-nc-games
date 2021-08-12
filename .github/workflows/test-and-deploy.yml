@@ -38,6 +38,6 @@ jobs:
       - name: Deploy to Heroku
         uses: akhileshns/heroku-deploy@v3.12.12
         with:
-          heroku_api_key: 4ab38a5f-e82b-4b2f-95ef-b78a23410984
+          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
           heroku_app_name: nc-games-chris
-          heroku_email: cjpearson@hotmail.com
+          heroku_email: ${{ secrets.HEROKU_EMAIL_ADDRESS }}
