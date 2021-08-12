@@ -10,7 +10,7 @@ exports.handlePsqlErrors = (err, req, res, next) => {
   } else if (err.code === "23503") {
     res.status(404).send({ message: "Insert or update violates foreign key constraint" });
   } else if (err.code === "23505") {
-    res.status(400).send({ message: "Duplicate key value violates unique constraint" });
+    res.status(400).send({ message: "Unique field already exists" });
   } else {
     next(err);
   }
