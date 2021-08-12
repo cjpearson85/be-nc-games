@@ -89,7 +89,7 @@ describe("POST - /api/categories", () => {
       })
       .expect(400);
 
-    expect(message).toBe("Duplicate key value violates unique constraint");
+    expect(message).toBe("Unique field already exists");
   });
 });
 
@@ -146,7 +146,7 @@ describe("POST - /api/users", () => {
       })
       .expect(400);
 
-    expect(message).toBe("Duplicate key value violates unique constraint");
+    expect(message).toBe("Unique field already exists");
   });
   test("should ignore any additional fields beyond the specified ones", async () => {
     const {
