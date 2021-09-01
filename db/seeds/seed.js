@@ -23,8 +23,8 @@ const seed = async (data) => {
   await db.query(`
     CREATE TABLE users (
       username VARCHAR(100) PRIMARY KEY NOT NULL,
-      avatar_url TEXT,
-      name VARCHAR(100)
+      avatar_url TEXT DEFAULT 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png' NOT NULL,
+      name VARCHAR(100) NOT NULL
     )`);
 
   await db.query(`
