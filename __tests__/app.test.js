@@ -310,6 +310,13 @@ describe("GET - /api/reviews", () => {
     expect(reviews).toHaveLength(1);
     expect(reviews[0].review_id).toBe(2);
   });
+  test("should return an array of review objects, filtered by the specified owner", async () => {
+    const {
+      body: { total_count },
+    } = await request(app).get("/api/reviews?owner=mallionaire").expect(200);
+
+    expect(total_count).toBe(11);
+  });
   test("should return an empty array if given a category that is in the db but has no associated reviews", async () => {
     const {
       body: { reviews },

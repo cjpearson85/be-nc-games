@@ -7,17 +7,18 @@ const {
 } = require("../models/reviews.models");
 
 exports.getReviews = (req, res, next) => {
-  const { sort_by, order, category, title, created_at, limit, p } = req.query;
+  const { sort_by, order, category, title, owner, created_at, limit, p } = req.query;
   const queries = {
     sort_by: sort_by || "created_at",
     order: order || "desc",
     category,
     title,
+    owner,
     created_at,
     limit: limit || 10,
     p: p || 1,
   };
-
+  
   selectReviews(queries)
     .then(({ rows: reviews, rowCount: total_count }) => {
       res.status(200).send({ total_count, reviews });
