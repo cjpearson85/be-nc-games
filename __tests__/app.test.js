@@ -102,6 +102,7 @@ describe("GET - /api/users", () => {
     expect(Array.isArray(users)).toBe(true);
     expect(users).toHaveLength(4);
     users.forEach((user) => {
+      expect(user).toHaveProperty('total_likes');
       expect(user).toMatchObject({
         username: expect.any(String),
         avatar_url: expect.any(String),
@@ -198,6 +199,7 @@ describe("GET - /api/users/:username", () => {
 
     const output = {
       username: "philippaclaire9",
+      total_likes: "25",
       avatar_url: "https://avatars2.githubusercontent.com/u/24604688?s=460&v=4",
       name: "philippa",
     };

@@ -7,18 +7,50 @@ const {
 } = require("../helper-functions.js");
 
 exports.selectUsers = async () => {
+  // queryStr = `
+  // SELECT * FROM users
+  // ORDER BY username ASC;
+  // `;
   queryStr = `
-  SELECT * FROM users
-  ORDER BY username ASC;
+    WITH total AS (
+      SELECT owner, votes
+      FROM reviews
+      UNION ALL
+      SELECT author AS owner, votes
+      FROM comments
+    )
+    SELECT username, SUM(votes) AS total_likes, avatar_url, name
+    FROM total
+    RIGHT JOIN users ON total.owner = users.username
+    GROUP BY username
+    ORDER BY username ASC;
   `;
+
   return getMultipleResults(queryStr);
 };
 
 exports.selectUserByUsername = async (username) => {
+  // queryStr = `
+  // SELECT * FROM users
+  // WHERE username = $1;
+  // `;
+
   queryStr = `
-  SELECT * FROM users
-  WHERE username = $1;
+    WITH total AS (
+      SELECT owner, votes
+      FROM reviews
+      WHERE owner = $1
+      UNION ALL
+      SELECT author AS owner, votes
+      FROM comments
+      WHERE author = $1
+    )
+    SELECT username, SUM(votes) AS total_likes, avatar_url, name
+    FROM total
+    LEFT JOIN users ON total.owner = users.username
+    GROUP BY username;
   `;
+
   return getSingleResult(queryStr, [username]);
 };
 
@@ -39,9 +71,9 @@ exports.updateUserByUsername = async (username, body) => {
   });
 
   if (pairs.length < 1) {
-    return Promise.reject({status: 400, message: 'Missing required fields'})
+    return Promise.reject({ status: 400, message: "Missing required fields" });
   }
- 
+
   let queryStr = `
     UPDATE users 
     SET `;
