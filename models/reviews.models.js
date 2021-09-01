@@ -8,6 +8,7 @@ exports.selectReviews = async ({
   order,
   category,
   title,
+  owner,
   created_at,
   limit,
   p,
@@ -62,6 +63,16 @@ exports.selectReviews = async ({
     queryCount++;
   }
 
+  if (owner) {
+    if (queryCount === 1) {
+      queryStr += ` WHERE owner = $${queryCount}`;
+    } else {
+      queryStr += ` AND owner = $${queryCount}`;
+    }
+    queryValues.push(owner);
+    queryCount++;
+  }
+
   if (created_at) {
     let compareTime = new Date(Date.now() - created_at);
 
@@ -91,6 +102,7 @@ exports.selectReviews = async ({
   queryValues.push(offset);
 
   // console.log(queryStr);
+  // console.log(queryValues);
 
   const { rows } = await db.query(queryStr, queryValues);
 
