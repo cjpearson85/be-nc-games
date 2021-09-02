@@ -406,6 +406,7 @@ describe("GET - /api/reviews", () => {
       .send({
         owner: "dav3rid",
         title: "test_title",
+        review_img_url: "https://images.pexels.com/photos/278918/pexels-photo-278918.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
         review_body: "test_body",
         designer: "Gamey McGameface",
         category: "dexterity",
@@ -430,6 +431,7 @@ describe("POST - /api/reviews", () => {
       .send({
         owner: "dav3rid",
         title: "test_title",
+        review_img_url: "https://images.pexels.com/photos/278918/pexels-photo-278918.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
         review_body: "test_body",
         designer: "Gamey McGameface",
         category: "dexterity",
@@ -440,6 +442,7 @@ describe("POST - /api/reviews", () => {
       review_id: 14,
       owner: "dav3rid",
       title: "test_title",
+      review_img_url: "https://images.pexels.com/photos/278918/pexels-photo-278918.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
       review_body: "test_body",
       designer: "Gamey McGameface",
       category: "dexterity",
@@ -474,6 +477,7 @@ describe("POST - /api/reviews", () => {
       .send({
         owner: "david",
         title: "test_title",
+        review_img_url: "https://images.pexels.com/photos/278918/pexels-photo-278918.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
         review_body: "test_body",
         designer: "Gamey McGameface",
         category: "dexterity",
@@ -490,6 +494,7 @@ describe("POST - /api/reviews", () => {
       .send({
         owner: "dav3rid",
         title: "test_title",
+        review_img_url: "https://images.pexels.com/photos/278918/pexels-photo-278918.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
         review_body: "test_body",
         designer: "Gamey McGameface",
         category: "deck-building",
@@ -508,6 +513,7 @@ describe("GET - /api/reviews/:review_id", () => {
 
     const output = {
       owner: "philippaclaire9",
+      avatar_url: "https://avatars2.githubusercontent.com/u/24604688?s=460&v=4",
       title: "Jenga",
       review_id: 2,
       review_body: "Fiddly fun for all the family",

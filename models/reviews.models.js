@@ -40,9 +40,11 @@ exports.selectReviews = async ({
 
   let queryValues = [];
   let queryStr = `
-    SELECT owner, title, reviews.review_id, category,review_img_url, reviews.created_at, reviews.votes, COUNT(comment_id) AS comment_count
+    SELECT owner, avatar_url, title, reviews.review_id, category,review_img_url, reviews.created_at, reviews.votes, COUNT(comment_id) AS comment_count
     FROM reviews
-    LEFT JOIN comments ON reviews.review_id = comments.review_id`;
+    LEFT JOIN comments ON reviews.review_id = comments.review_id
+    LEFT JOIN users ON reviews.owner = users.username
+  `;
 
   let queryCount = 1;
 
@@ -86,7 +88,7 @@ exports.selectReviews = async ({
   }
 
   queryStr += ` 
-    GROUP BY reviews.review_id
+    GROUP BY reviews.review_id, avatar_url
     ORDER BY ${sort_by} ${order}, review_id DESC `;
 
   const { rowCount } = await db.query(queryStr, queryValues);
@@ -127,11 +129,12 @@ exports.insertReview = async (body) => {
 
 exports.selectReviewById = async (review_id) => {
   let queryStr = `
-    SELECT owner, title, reviews.review_id, review_body, designer, review_img_url, category, reviews.created_at, reviews.votes, COUNT(comment_id) AS comment_count
+    SELECT owner, avatar_url, title, reviews.review_id, review_body, designer, review_img_url, category, reviews.created_at, reviews.votes, COUNT(comment_id) AS comment_count
     FROM reviews
     LEFT JOIN comments ON reviews.review_id = comments.review_id
+    LEFT JOIN users ON reviews.owner = users.username
     WHERE reviews.review_id = $1
-    GROUP BY reviews.review_id;
+    GROUP BY reviews.review_id, avatar_url;
     `;
   return getSingleResult(queryStr, [review_id]);
 };

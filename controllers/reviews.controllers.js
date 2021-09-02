@@ -18,7 +18,7 @@ exports.getReviews = (req, res, next) => {
     limit: limit || 10,
     p: p || 1,
   };
-  
+
   selectReviews(queries)
     .then(({ rows: reviews, rowCount: total_count }) => {
       res.status(200).send({ total_count, reviews });
@@ -27,9 +27,9 @@ exports.getReviews = (req, res, next) => {
 };
 
 exports.postReview = (req, res, next) => {
-  const { owner, title, review_body, designer, category } = req.body;
+  const { owner, title, review_img_url, review_body, designer, category } = req.body;
 
-  insertReview({ owner, title, review_body, designer, category })
+  insertReview({ owner, title, review_img_url, review_body, designer, category })
     .then((review) => {
       res.status(201).send({ review });
     })
