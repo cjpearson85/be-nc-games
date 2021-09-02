@@ -6,8 +6,20 @@ const {
 } = require("../models/users.models");
 
 exports.getUsers = (req, res, next) => {
-  selectUsers()
+  const { sort_by, order, limit, p } = req.query;
+  const queries = {
+    sort_by: sort_by || "username",
+    order: order || "asc",
+    limit: limit || 10,
+    p: p || 1,
+  };
+
+  selectUsers(queries)
     .then((users) => {
+      users = users.map(user => {
+        user.total_likes = +user.total_likes;
+        return user
+      })
       res.status(200).send({ users });
     })
     .catch(next);

@@ -102,14 +102,23 @@ describe("GET - /api/users", () => {
     expect(Array.isArray(users)).toBe(true);
     expect(users).toHaveLength(4);
     users.forEach((user) => {
-      expect(user).toHaveProperty('total_likes');
       expect(user).toMatchObject({
         username: expect.any(String),
+        total_likes: expect.any(Number),
         avatar_url: expect.any(String),
         name: expect.any(String),
       });
     });
     expect(users).toBeSortedBy("username", { ascending: true });
+  });
+  test("should return an array of user objects on a key of users, sorted in descending order by total likes", async () => {
+    const {
+      body: { users },
+    } = await request(app)
+      .get("/api/users?sort_by=total_likes&order=desc")
+      .expect(200);  
+
+    expect(users).toBeSortedBy("total_likes", { descending: true });
   });
 });
 
@@ -379,7 +388,7 @@ describe("GET - /api/reviews", () => {
 
     expect(Array.isArray(reviews)).toBe(true);
     expect(reviews).toHaveLength(5);
-    expect(reviews[0].review_id).toBe(10);
+    expect(reviews[0].review_id).toBe(9);
     expect(reviews[4].review_id).toBe(1);
   });
   test("should return an array of reviews by the limit and a total_count displaying the number of result discounting the limit", async () => {
