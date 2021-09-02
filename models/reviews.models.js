@@ -87,7 +87,7 @@ exports.selectReviews = async ({
 
   queryStr += ` 
     GROUP BY reviews.review_id
-    ORDER BY ${sort_by} ${order} `;
+    ORDER BY ${sort_by} ${order}, review_id DESC `;
 
   const { rowCount } = await db.query(queryStr, queryValues);
 

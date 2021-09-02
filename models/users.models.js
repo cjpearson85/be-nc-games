@@ -6,11 +6,14 @@ const {
   getMultipleResults,
 } = require("../helper-functions.js");
 
-exports.selectUsers = async () => {
-  // queryStr = `
-  // SELECT * FROM users
-  // ORDER BY username ASC;
-  // `;
+exports.selectUsers = async ({ sort_by, order, limit, p }) => {
+  const validSortBy = ["username", "total_likes"];
+  const validOrder = ["asc", "desc"];
+
+  if (!validSortBy.includes(sort_by) || !validOrder.includes(order)) {
+    return Promise.reject({ status: 400, message: "bad request" });
+  }
+
   queryStr = `
     WITH total AS (
       SELECT owner, votes
@@ -23,18 +26,13 @@ exports.selectUsers = async () => {
     FROM total
     RIGHT JOIN users ON total.owner = users.username
     GROUP BY username
-    ORDER BY username ASC;
+    ORDER BY ${sort_by} ${order} NULLS LAST;
   `;
 
   return getMultipleResults(queryStr);
 };
 
 exports.selectUserByUsername = async (username) => {
-  // queryStr = `
-  // SELECT * FROM users
-  // WHERE username = $1;
-  // `;
-
   queryStr = `
     WITH total AS (
       SELECT owner, votes
