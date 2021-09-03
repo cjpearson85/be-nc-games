@@ -37,15 +37,14 @@ exports.selectUserByUsername = async (username) => {
     WITH total AS (
       SELECT owner, votes
       FROM reviews
-      WHERE owner = $1
       UNION ALL
       SELECT author AS owner, votes
       FROM comments
-      WHERE author = $1
     )
     SELECT username, SUM(votes) AS total_likes, avatar_url, name
     FROM total
-    LEFT JOIN users ON total.owner = users.username
+    RIGHT JOIN users ON total.owner = users.username
+    WHERE username = $1
     GROUP BY username;
   `;
 

@@ -3,7 +3,7 @@ module.exports = [
     username: 'tickle122',
     name: 'Tom Tickle',
     avatar_url:
-      'https://www.spiritsurfers.net/monastery/wp-content/uploads/_41500270_mrtickle.jpg'
+      'https://cdn.shopify.com/s/files/1/0194/0815/8819/t/7/assets/svg--character--mr-tickle.svg?v=581547693959934176'
   },
   {
     username: 'grumpy19',
@@ -19,13 +19,12 @@ module.exports = [
   {
     username: 'cooljmessy',
     name: 'Peter Messy',
-    avatar_url: 'https://i.imgur.com/WfX0Neu.jpg'
+    avatar_url: 'https://cdn.shopify.com/s/files/1/0194/0815/8819/t/7/assets/svg--character--mr-messy.svg?v=16133629632717342549'
   },
   {
     username: 'weegembump',
     name: 'Gemma Bump',
-    avatar_url:
-      'https://www.upandrunning.co.uk/media/catalog/product/cache/1/image/650x/040ec09b1e35df139433887a97daa66f/m/r/mr-bump.jpg'
+    avatar_url: 'https://cdn.shopify.com/s/files/1/0194/0815/8819/t/7/assets/svg--character--mr-bump.svg?v=12730736646239031661'
   },
   {
     username: 'jessjelly',
