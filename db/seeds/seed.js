@@ -23,7 +23,7 @@ const seed = async (data) => {
   await db.query(`
     CREATE TABLE users (
       username VARCHAR(100) PRIMARY KEY NOT NULL,
-      avatar_url TEXT DEFAULT 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png',
+      avatar_url TEXT DEFAULT 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png' NOT NULL,
       name VARCHAR(100) NOT NULL
     )`);
 
@@ -33,7 +33,7 @@ const seed = async (data) => {
       title VARCHAR(100) NOT NULL,
       review_body TEXT NOT NULL,
       designer VARCHAR(100) NOT NULL,
-      review_img_url TEXT DEFAULT 'https://images.pexels.com/photos/163064/play-stone-network-networked-interactive-163064.jpeg',
+      review_img_url TEXT DEFAULT 'https://images.pexels.com/photos/163064/play-stone-network-networked-interactive-163064.jpeg' NOT NULL,
       votes INT DEFAULT 0 NOT NULL,
       category VARCHAR(100) REFERENCES categories(slug) NOT NULL,
       owner VARCHAR(100) REFERENCES users(username) NOT NULL,
