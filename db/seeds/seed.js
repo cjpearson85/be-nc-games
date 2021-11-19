@@ -23,8 +23,9 @@ const seed = async (data) => {
   await db.query(`
     CREATE TABLE users (
       username VARCHAR(100) PRIMARY KEY NOT NULL,
-      avatar_url TEXT DEFAULT 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png' NOT NULL,
-      name VARCHAR(100) NOT NULL
+      name VARCHAR(100) NOT NULL,
+      password VARCHAR(100) NOT NULL,
+      avatar_url TEXT DEFAULT 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png' NOT NULL
     )`);
 
   await db.query(`
@@ -59,7 +60,7 @@ const seed = async (data) => {
   await db.query(categoriesQuery);
 
   table = "users";
-  columns = ["username", "avatar_url", "name"];
+  columns = ["username", "avatar_url", "name", "password"];
   values = valuesFormatter(userData, columns);
 
   const usersQuery = insertToTable(table, columns, values);
@@ -87,7 +88,7 @@ const seed = async (data) => {
   const reviewRefObj = createRef(rows, "title", "review_id");
 
   table = "comments";
-  columns = ['author', 'review_id', 'votes', 'created_at', 'body'];
+  columns = ["author", "review_id", "votes", "created_at", "body"];
   values = commentsFormatter(commentData, reviewRefObj);
 
   const commentsQuery = insertToTable(table, columns, values);

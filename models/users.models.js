@@ -51,6 +51,16 @@ exports.selectUserByUsername = async (username) => {
   return getSingleResult(queryStr, [username]);
 };
 
+exports.checkUserCredentials = async (username) => {
+  queryStr = `
+    SELECT username, password
+    FROM users
+    WHERE username = $1;
+  `;
+
+  return getSingleResult(queryStr, [username]);
+};
+
 exports.insertUser = async (body) => {
   const columns = Object.keys(body);
   const values = Object.values(body);

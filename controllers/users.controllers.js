@@ -16,10 +16,10 @@ exports.getUsers = (req, res, next) => {
 
   selectUsers(queries)
     .then((users) => {
-      users = users.map(user => {
+      users = users.map((user) => {
         user.total_likes = +user.total_likes;
-        return user
-      })
+        return user;
+      });
       res.status(200).send({ users });
     })
     .catch(next);
@@ -38,9 +38,9 @@ exports.getUserByUsername = (req, res, next) => {
 };
 
 exports.postUser = (req, res, next) => {
-  const { username, avatar_url, name } = req.body;
+  const { username, avatar_url, name, password } = req.body;
 
-  insertUser({ username, avatar_url, name })
+  insertUser({ username, avatar_url, name, password })
     .then((user) => {
       res.status(201).send({ user });
     })

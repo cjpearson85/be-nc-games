@@ -27,6 +27,33 @@ describe("GET - /api/invalidpath", () => {
   });
 });
 
+describe("/login", () => {
+  it("POST responds with an access token given correct username and password", () =>
+    request(app)
+      .post("/api/login")
+      .send({ username: "mallionaire", password: "secure123" })
+      .expect(200)
+      .then(({ body }) => {
+        expect(body).toHaveProperty("token");
+      }));
+  it("POST responds with status 401 for an incorrect password", () =>
+    request(app)
+      .post("/api/login")
+      .send({ username: "mallionaire", password: "wrong-password" })
+      .expect(401)
+      .then(({ body: { message } }) => {
+        expect(message).toEqual("invalid username or password");
+      }));
+  it("POST responds with status 401 for an incorrect username", () =>
+    request(app)
+      .post("/api/login")
+      .send({ username: "paul", password: "secure123" })
+      .expect(401)
+      .then(({ body: { message } }) => {
+        expect(message).toEqual("invalid username or password");
+      }));
+});
+
 describe("GET - /api/categories", () => {
   test('should return an array of category objects on a key of "categories", sorted in ascending alphabetical order by slug by default', async () => {
     const {
@@ -116,7 +143,7 @@ describe("GET - /api/users", () => {
       body: { users },
     } = await request(app)
       .get("/api/users?sort_by=total_likes&order=desc")
-      .expect(200);  
+      .expect(200);
 
     expect(users).toBeSortedBy("total_likes", { descending: true });
   });
@@ -132,6 +159,7 @@ describe("POST - /api/users", () => {
         username: "test_username",
         avatar_url: "https://fakeurl.com/test.png",
         name: "John Doe",
+        password: "secure123",
       })
       .expect(201);
 
@@ -139,6 +167,7 @@ describe("POST - /api/users", () => {
       username: "test_username",
       avatar_url: "https://fakeurl.com/test.png",
       name: "John Doe",
+      password: "secure123",
     });
 
     const { rowCount } = await db.query(`SELECT * FROM users`);
@@ -153,6 +182,7 @@ describe("POST - /api/users", () => {
         username: "philippaclaire9",
         avatar_url: "https://fakeurl.com/test.png",
         name: "John Doe",
+        password: "secure123",
       })
       .expect(400);
 
@@ -167,6 +197,7 @@ describe("POST - /api/users", () => {
         username: "test_username",
         avatar_url: "https://fakeurl.com/test.png",
         name: "John Doe",
+        password: "secure123",
         address: "123 Fake Street",
       })
       .expect(201);
@@ -175,12 +206,14 @@ describe("POST - /api/users", () => {
       username: "test_username",
       avatar_url: "https://fakeurl.com/test.png",
       name: "John Doe",
+      password: "secure123",
     });
     expect(user).toEqual(
       expect.not.objectContaining({
         username: "test_username",
         avatar_url: "https://fakeurl.com/test.png",
         name: "John Doe",
+        password: "secure123",
         address: "123 Fake Street",
       })
     );
@@ -400,18 +433,19 @@ describe("GET - /api/reviews", () => {
     expect(reviews).toHaveLength(5);
     expect(total_count).toBe(13);
   });
-  test('should return all the reviews created in the last 10 minutes', async () => {
+  test("should return all the reviews created in the last 10 minutes", async () => {
     await request(app)
       .post("/api/reviews")
       .send({
         owner: "dav3rid",
         title: "test_title",
-        review_img_url: "https://images.pexels.com/photos/278918/pexels-photo-278918.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
+        review_img_url:
+          "https://images.pexels.com/photos/278918/pexels-photo-278918.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
         review_body: "test_body",
         designer: "Gamey McGameface",
         category: "dexterity",
-        created_at: new Date(Date.now() - 540000)
-      })
+        created_at: new Date(Date.now() - 540000),
+      });
 
     const {
       body: { reviews, total_count },
@@ -431,7 +465,8 @@ describe("POST - /api/reviews", () => {
       .send({
         owner: "dav3rid",
         title: "test_title",
-        review_img_url: "https://images.pexels.com/photos/278918/pexels-photo-278918.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
+        review_img_url:
+          "https://images.pexels.com/photos/278918/pexels-photo-278918.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
         review_body: "test_body",
         designer: "Gamey McGameface",
         category: "dexterity",
@@ -442,7 +477,8 @@ describe("POST - /api/reviews", () => {
       review_id: 14,
       owner: "dav3rid",
       title: "test_title",
-      review_img_url: "https://images.pexels.com/photos/278918/pexels-photo-278918.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
+      review_img_url:
+        "https://images.pexels.com/photos/278918/pexels-photo-278918.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
       review_body: "test_body",
       designer: "Gamey McGameface",
       category: "dexterity",
@@ -477,7 +513,8 @@ describe("POST - /api/reviews", () => {
       .send({
         owner: "david",
         title: "test_title",
-        review_img_url: "https://images.pexels.com/photos/278918/pexels-photo-278918.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
+        review_img_url:
+          "https://images.pexels.com/photos/278918/pexels-photo-278918.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
         review_body: "test_body",
         designer: "Gamey McGameface",
         category: "dexterity",
@@ -494,7 +531,8 @@ describe("POST - /api/reviews", () => {
       .send({
         owner: "dav3rid",
         title: "test_title",
-        review_img_url: "https://images.pexels.com/photos/278918/pexels-photo-278918.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
+        review_img_url:
+          "https://images.pexels.com/photos/278918/pexels-photo-278918.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
         review_body: "test_body",
         designer: "Gamey McGameface",
         category: "deck-building",
