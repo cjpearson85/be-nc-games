@@ -32,6 +32,7 @@
   "devDependencies": {
     "jest": "^27.0.6",
     "jest-sorted": "^1.0.12",
+    "superagent-defaults": "^0.1.14",
     "supertest": "^6.1.4"
   },
   "jest": {
