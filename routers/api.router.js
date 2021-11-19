@@ -24,7 +24,7 @@ apiRouter.post("/login", (req, res, next) => {
           { user: user.username, iat: Date.now() },
           process.env.JWT_SECRET
         );
-        res.send({ token });
+        res.status(200).send({ token });
       }
     })
     .catch(() => {
@@ -32,13 +32,19 @@ apiRouter.post("/login", (req, res, next) => {
     });
 });
 
-app.use((req, res, next) => {
+apiRouter.use((req, res, next) => {
   const { authorization } = req.headers;
-  const token = authorization.split(" ")[1];
-  jwt.verify(token, process.env.JWT_SECRET, (err, res) => {
-    if (err) next({ status: 401, msg: "Unauthorised" });
-    else next();
-  });
+  if (!authorization) res.status(401).send({ message: "Unauthorised" });
+  else {
+    const token = authorization.split(" ")[1];
+    jwt.verify(token, process.env.JWT_SECRET, (err, res) => {
+      if (err) {
+        res.status(401).send({ message: "Unauthorised" });
+      } else {
+        next();
+      }
+    });
+  }
 });
 
 apiRouter.use("/categories", categoriesRouter);

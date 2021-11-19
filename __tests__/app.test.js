@@ -1,17 +1,27 @@
 const db = require("../db/connection.js");
-const request = require("supertest");
+const app = require("../app.js");
+const defaults = require("superagent-defaults");
+const request = defaults(require("supertest")(app));
 const testData = require("../db/data/test-data/index.js");
 const seed = require("../db/seeds/seed.js");
-const app = require("../app.js");
 
-beforeEach(() => seed(testData));
+beforeEach(async () => {
+  await seed(testData);
+  const {
+    body: { token },
+  } = await request
+    .post("/api/login")
+    .send({ username: "mallionaire", password: "secure123" });
+  request.set("Authorization", `BEARER ${token}`);
+});
+
 afterAll(() => db.end());
 
 describe("GET - /api", () => {
   test("should return a json representation of all the available endpoints of the api", async () => {
     const {
       body: { endpoints },
-    } = await request(app).get("/api").expect(200);
+    } = await request.get("/api").expect(200);
     expect(endpoints).toHaveProperty("GET /api/categories");
     expect(endpoints).toHaveProperty("GET /api/reviews");
   });
@@ -21,7 +31,7 @@ describe("GET - /api/invalidpath", () => {
   test("should return a 404 with a custom message if a request is made to an invalid path", async () => {
     const {
       body: { message },
-    } = await request(app).get("/api/invalidpath").expect(404);
+    } = await request.get("/api/invalidpath").expect(404);
 
     expect(message).toBe("Invalid path");
   });
@@ -29,7 +39,7 @@ describe("GET - /api/invalidpath", () => {
 
 describe("/login", () => {
   it("POST responds with an access token given correct username and password", () =>
-    request(app)
+    request
       .post("/api/login")
       .send({ username: "mallionaire", password: "secure123" })
       .expect(200)
@@ -37,7 +47,7 @@ describe("/login", () => {
         expect(body).toHaveProperty("token");
       }));
   it("POST responds with status 401 for an incorrect password", () =>
-    request(app)
+    request
       .post("/api/login")
       .send({ username: "mallionaire", password: "wrong-password" })
       .expect(401)
@@ -45,7 +55,7 @@ describe("/login", () => {
         expect(message).toEqual("invalid username or password");
       }));
   it("POST responds with status 401 for an incorrect username", () =>
-    request(app)
+    request
       .post("/api/login")
       .send({ username: "paul", password: "secure123" })
       .expect(401)
@@ -58,7 +68,7 @@ describe("GET - /api/categories", () => {
   test('should return an array of category objects on a key of "categories", sorted in ascending alphabetical order by slug by default', async () => {
     const {
       body: { categories },
-    } = await request(app).get("/api/categories").expect(200);
+    } = await request.get("/api/categories").expect(200);
 
     expect(Array.isArray(categories)).toBe(true);
     expect(categories).toHaveLength(4);
@@ -77,7 +87,7 @@ describe("POST - /api/categories", () => {
   test("should add a new category to the categories table and return the newly created category object", async () => {
     const {
       body: { category },
-    } = await request(app)
+    } = await request
       .post("/api/categories")
       .send({
         slug: "test_slug",
@@ -96,7 +106,7 @@ describe("POST - /api/categories", () => {
   test("should return a 400 status code and custom message when no slug on request body", async () => {
     const {
       body: { message },
-    } = await request(app)
+    } = await request
       .post("/api/categories")
       .send({
         description: "test_description",
@@ -108,7 +118,7 @@ describe("POST - /api/categories", () => {
   test("should return a 400 status code and custom message when slug already exists in db", async () => {
     const {
       body: { message },
-    } = await request(app)
+    } = await request
       .post("/api/categories")
       .send({
         slug: "dexterity",
@@ -124,7 +134,7 @@ describe("GET - /api/users", () => {
   test("should return an array of user objects on a key of users, sorted in ascending alphabetical order by username by default", async () => {
     const {
       body: { users },
-    } = await request(app).get("/api/users").expect(200);
+    } = await request.get("/api/users").expect(200);
 
     expect(Array.isArray(users)).toBe(true);
     expect(users).toHaveLength(4);
@@ -141,7 +151,7 @@ describe("GET - /api/users", () => {
   test("should return an array of user objects on a key of users, sorted in descending order by total likes", async () => {
     const {
       body: { users },
-    } = await request(app)
+    } = await request
       .get("/api/users?sort_by=total_likes&order=desc")
       .expect(200);
 
@@ -153,7 +163,7 @@ describe("POST - /api/users", () => {
   test("should add a new user to the database and return the newly created user object ", async () => {
     const {
       body: { user },
-    } = await request(app)
+    } = await request
       .post("/api/users")
       .send({
         username: "test_username",
@@ -176,7 +186,7 @@ describe("POST - /api/users", () => {
   test("should return a 400 and message if provided username already exists", async () => {
     const {
       body: { message },
-    } = await request(app)
+    } = await request
       .post("/api/users")
       .send({
         username: "philippaclaire9",
@@ -191,7 +201,7 @@ describe("POST - /api/users", () => {
   test("should ignore any additional fields beyond the specified ones", async () => {
     const {
       body: { user },
-    } = await request(app)
+    } = await request
       .post("/api/users")
       .send({
         username: "test_username",
@@ -221,7 +231,7 @@ describe("POST - /api/users", () => {
   test("should return a 400 status code and message if missing any required input fields", async () => {
     const {
       body: { message },
-    } = await request(app)
+    } = await request
       .post("/api/users")
       .send({
         avatar_url: "https://fakeurl.com/test.png",
@@ -237,7 +247,7 @@ describe("GET - /api/users/:username", () => {
   test("should return a user object matching the associated username", async () => {
     const {
       body: { user },
-    } = await request(app).get("/api/users/philippaclaire9").expect(200);
+    } = await request.get("/api/users/philippaclaire9").expect(200);
 
     const output = {
       username: "philippaclaire9",
@@ -251,7 +261,7 @@ describe("GET - /api/users/:username", () => {
   test("should return a 404 if an passed a valid username that doesn't exist in the database", async () => {
     const {
       body: { message },
-    } = await request(app).get("/api/users/dog").expect(404);
+    } = await request.get("/api/users/dog").expect(404);
 
     expect(message).toBe("User not found");
   });
@@ -261,7 +271,7 @@ describe("PATCH - /api/users/:username", () => {
   test("should update the specified fields and return the amended user object", async () => {
     const {
       body: { user },
-    } = await request(app)
+    } = await request
       .patch("/api/users/philippaclaire9")
       .send({
         avatar_url: "https://fakeurl.com/test.png",
@@ -278,7 +288,7 @@ describe("PATCH - /api/users/:username", () => {
   test("should not alter any fields not included in request body", async () => {
     const {
       body: { user },
-    } = await request(app)
+    } = await request
       .patch("/api/users/philippaclaire9")
       .send({
         avatar_url: "https://fakeurl.com/test.png",
@@ -294,17 +304,14 @@ describe("PATCH - /api/users/:username", () => {
   test("should return 400 if given no valid fields to update", async () => {
     const {
       body: { message },
-    } = await request(app)
-      .patch("/api/users/philippaclaire9")
-      .send({})
-      .expect(400);
+    } = await request.patch("/api/users/philippaclaire9").send({}).expect(400);
 
     expect(message).toBe("Missing required fields");
   });
   test("should return a 404 if an passed a valid username that doesn't exist in the database", async () => {
     const {
       body: { message },
-    } = await request(app)
+    } = await request
       .patch("/api/users/dog")
       .send({
         avatar_url: "https://fakeurl.com/test.png",
@@ -319,7 +326,7 @@ describe("GET - /api/reviews", () => {
   test("should return an array of review objects, ordered by date descending by default", async () => {
     const {
       body: { reviews, total_count },
-    } = await request(app).get("/api/reviews").expect(200);
+    } = await request.get("/api/reviews").expect(200);
 
     expect(Array.isArray(reviews)).toBe(true);
     expect(total_count).toBe(13);
@@ -340,7 +347,7 @@ describe("GET - /api/reviews", () => {
   test("should return an array of review objects, ordered by the specified parameters", async () => {
     const {
       body: { reviews },
-    } = await request(app)
+    } = await request
       .get("/api/reviews?sort_by=review_id&order=asc")
       .expect(200);
 
@@ -349,7 +356,7 @@ describe("GET - /api/reviews", () => {
   test("should return an array of review objects, filtered by the specified category", async () => {
     const {
       body: { reviews },
-    } = await request(app).get("/api/reviews?category=dexterity").expect(200);
+    } = await request.get("/api/reviews?category=dexterity").expect(200);
 
     expect(reviews).toHaveLength(1);
     expect(reviews[0].review_id).toBe(2);
@@ -357,14 +364,14 @@ describe("GET - /api/reviews", () => {
   test("should return an array of review objects, filtered by the specified owner", async () => {
     const {
       body: { total_count },
-    } = await request(app).get("/api/reviews?owner=mallionaire").expect(200);
+    } = await request.get("/api/reviews?owner=mallionaire").expect(200);
 
     expect(total_count).toBe(11);
   });
   test("should return an empty array if given a category that is in the db but has no associated reviews", async () => {
     const {
       body: { reviews },
-    } = await request(app)
+    } = await request
       .get("/api/reviews?category=children's%20games")
       .expect(200);
 
@@ -373,7 +380,7 @@ describe("GET - /api/reviews", () => {
   test("should return an array of review objects, filtered by the specified title", async () => {
     const {
       body: { reviews },
-    } = await request(app)
+    } = await request
       .get(
         "/api/reviews?title=werewolf&category=social deduction&sort_by=review_id"
       )
@@ -386,28 +393,28 @@ describe("GET - /api/reviews", () => {
   test('should return 400 status code and a message of "bad request" if provided an invalid column to sort by', async () => {
     const {
       body: { message },
-    } = await request(app).get("/api/reviews?sort_by=dexterity").expect(400);
+    } = await request.get("/api/reviews?sort_by=dexterity").expect(400);
 
     expect(message).toBe("bad request");
   });
   test('should return 400 status code and a message of "bad request" if provided an invalid order query', async () => {
     const {
       body: { message },
-    } = await request(app).get("/api/reviews?order=dexterity").expect(400);
+    } = await request.get("/api/reviews?order=dexterity").expect(400);
 
     expect(message).toBe("bad request");
   });
   test("should return 404 if provided an category that doesn't exist in the database", async () => {
     const {
       body: { message },
-    } = await request(app).get("/api/reviews?category=chance").expect(404);
+    } = await request.get("/api/reviews?category=chance").expect(404);
 
     expect(message).toBe("Category not found");
   });
   test("should return the first ten rows when passed no additional queries", async () => {
     const {
       body: { reviews },
-    } = await request(app).get("/api/reviews").expect(200);
+    } = await request.get("/api/reviews").expect(200);
 
     expect(Array.isArray(reviews)).toBe(true);
     expect(reviews).toHaveLength(10);
@@ -417,7 +424,7 @@ describe("GET - /api/reviews", () => {
   test("should return the second five rows when passed additional queries", async () => {
     const {
       body: { reviews },
-    } = await request(app).get("/api/reviews?limit=5&p=2").expect(200);
+    } = await request.get("/api/reviews?limit=5&p=2").expect(200);
 
     expect(Array.isArray(reviews)).toBe(true);
     expect(reviews).toHaveLength(5);
@@ -427,29 +434,27 @@ describe("GET - /api/reviews", () => {
   test("should return an array of reviews by the limit and a total_count displaying the number of result discounting the limit", async () => {
     const {
       body: { total_count, reviews },
-    } = await request(app).get("/api/reviews?limit=5").expect(200);
+    } = await request.get("/api/reviews?limit=5").expect(200);
 
     expect(Array.isArray(reviews)).toBe(true);
     expect(reviews).toHaveLength(5);
     expect(total_count).toBe(13);
   });
   test("should return all the reviews created in the last 10 minutes", async () => {
-    await request(app)
-      .post("/api/reviews")
-      .send({
-        owner: "dav3rid",
-        title: "test_title",
-        review_img_url:
-          "https://images.pexels.com/photos/278918/pexels-photo-278918.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
-        review_body: "test_body",
-        designer: "Gamey McGameface",
-        category: "dexterity",
-        created_at: new Date(Date.now() - 540000),
-      });
+    await request.post("/api/reviews").send({
+      owner: "dav3rid",
+      title: "test_title",
+      review_img_url:
+        "https://images.pexels.com/photos/278918/pexels-photo-278918.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
+      review_body: "test_body",
+      designer: "Gamey McGameface",
+      category: "dexterity",
+      created_at: new Date(Date.now() - 540000),
+    });
 
     const {
       body: { reviews, total_count },
-    } = await request(app).get("/api/reviews?created_at=600000").expect(200);
+    } = await request.get("/api/reviews?created_at=600000").expect(200);
 
     expect(total_count).toBe(1);
     expect(reviews[0].review_id).toBe(14);
@@ -460,7 +465,7 @@ describe("POST - /api/reviews", () => {
   test("should add a new review to the database and return the newly created review object", async () => {
     const {
       body: { review },
-    } = await request(app)
+    } = await request
       .post("/api/reviews")
       .send({
         owner: "dav3rid",
@@ -493,7 +498,7 @@ describe("POST - /api/reviews", () => {
   test("should return a 400 status code and message if missing any required input fields", async () => {
     const {
       body: { message },
-    } = await request(app)
+    } = await request
       .post("/api/reviews")
       .send({
         owner: "dav3rid",
@@ -508,7 +513,7 @@ describe("POST - /api/reviews", () => {
   test("should return a 404 status code and message if owner not in the db", async () => {
     const {
       body: { message },
-    } = await request(app)
+    } = await request
       .post("/api/reviews")
       .send({
         owner: "david",
@@ -526,7 +531,7 @@ describe("POST - /api/reviews", () => {
   test("should return a 404 status code and message if category not in the db", async () => {
     const {
       body: { message },
-    } = await request(app)
+    } = await request
       .post("/api/reviews")
       .send({
         owner: "dav3rid",
@@ -547,7 +552,7 @@ describe("GET - /api/reviews/:review_id", () => {
   test("should return a review object matching the review_id", async () => {
     const {
       body: { review },
-    } = await request(app).get("/api/reviews/2").expect(200);
+    } = await request.get("/api/reviews/2").expect(200);
 
     const output = {
       owner: "philippaclaire9",
@@ -568,14 +573,14 @@ describe("GET - /api/reviews/:review_id", () => {
   test("should return a 400 if an passed an invalid review_id", async () => {
     const {
       body: { message },
-    } = await request(app).get("/api/reviews/not_an_id").expect(400);
+    } = await request.get("/api/reviews/not_an_id").expect(400);
 
     expect(message).toBe("Invalid datatype");
   });
   test("should return a 404 if an passed a valid review_id that doesn't exist in the database", async () => {
     const {
       body: { message },
-    } = await request(app).get("/api/reviews/100").expect(404);
+    } = await request.get("/api/reviews/100").expect(404);
 
     expect(message).toBe("Review not found");
   });
@@ -585,7 +590,7 @@ describe("PATCH - /api/reviews/:review_id", () => {
   test("should update the votes field by the specified amount and return the amended review", async () => {
     const {
       body: { review },
-    } = await request(app)
+    } = await request
       .patch("/api/reviews/12")
       .send({ inc_votes: 20 })
       .expect(200);
@@ -595,7 +600,7 @@ describe("PATCH - /api/reviews/:review_id", () => {
   test("should update the votes field by the specified amount and return the amended review--should work with negative values too", async () => {
     const {
       body: { review },
-    } = await request(app)
+    } = await request
       .patch("/api/reviews/12")
       .send({ inc_votes: -20 })
       .expect(200);
@@ -605,7 +610,7 @@ describe("PATCH - /api/reviews/:review_id", () => {
   test("should update the review body if passed the relevant field", async () => {
     const {
       body: { review },
-    } = await request(app)
+    } = await request
       .patch("/api/reviews/12")
       .send({ review_body: "Test" })
       .expect(200);
@@ -615,7 +620,7 @@ describe("PATCH - /api/reviews/:review_id", () => {
   test("should still work when updating multiple fields at once", async () => {
     const {
       body: { review },
-    } = await request(app)
+    } = await request
       .patch("/api/reviews/12")
       .send({ inc_votes: 20, review_body: "Test" })
       .expect(200);
@@ -626,14 +631,14 @@ describe("PATCH - /api/reviews/:review_id", () => {
   test("should return a 400 and custom message when a required input field is missing", async () => {
     const {
       body: { message },
-    } = await request(app).patch("/api/reviews/12").send({}).expect(400);
+    } = await request.patch("/api/reviews/12").send({}).expect(400);
 
     expect(message).toBe("Missing required fields");
   });
   test("should return a 400 and custom message when input field is of the incorrect datatype", async () => {
     const {
       body: { message },
-    } = await request(app)
+    } = await request
       .patch("/api/reviews/12")
       .send({ inc_votes: "twenty" })
       .expect(400);
@@ -643,7 +648,7 @@ describe("PATCH - /api/reviews/:review_id", () => {
   test("should return a 404 if an passed a valid review_id that doesn't exist in the database", async () => {
     const {
       body: { message },
-    } = await request(app)
+    } = await request
       .patch("/api/reviews/15")
       .send({ inc_votes: 20 })
       .expect(404);
@@ -653,7 +658,7 @@ describe("PATCH - /api/reviews/:review_id", () => {
   test("should return a 400 and custom message when passed an invalid review_id", async () => {
     const {
       body: { message },
-    } = await request(app)
+    } = await request
       .patch("/api/reviews/seven")
       .send({ inc_votes: 1 })
       .expect(400);
@@ -664,7 +669,7 @@ describe("PATCH - /api/reviews/:review_id", () => {
 
 describe("DELETE - /api/reviews/:review_id", () => {
   test("should remove the specified review and all associated comments from the database", () => {
-    return request(app)
+    return request
       .delete("/api/reviews/2")
       .expect(204)
       .then(() => {
@@ -681,14 +686,14 @@ describe("DELETE - /api/reviews/:review_id", () => {
   test("should return a 400 and custom message when passed an invalid review_id", async () => {
     const {
       body: { message },
-    } = await request(app).delete("/api/reviews/seven").expect(400);
+    } = await request.delete("/api/reviews/seven").expect(400);
 
     expect(message).toBe("Bad request");
   });
   test("should return a 404 and a custom message when trying to delete a review that doesn't exist", async () => {
     const {
       body: { message },
-    } = await request(app).delete("/api/reviews/15").expect(404);
+    } = await request.delete("/api/reviews/15").expect(404);
 
     expect(message).toBe("Review not found");
   });
@@ -698,7 +703,7 @@ describe("GET - /api/reviews/:review_id/comments", () => {
   test("should return an array of all the comments for a specific review, ordered by date descending by default", async () => {
     const {
       body: { comments },
-    } = await request(app).get("/api/reviews/2/comments").expect(200);
+    } = await request.get("/api/reviews/2/comments").expect(200);
 
     expect(Array.isArray(comments)).toBe(true);
     expect(comments).toHaveLength(3);
@@ -716,7 +721,7 @@ describe("GET - /api/reviews/:review_id/comments", () => {
   test("should return an array of review objects, ordered by the specified parameters", async () => {
     const {
       body: { comments },
-    } = await request(app)
+    } = await request
       .get("/api/reviews/2/comments?sort_by=votes&order=asc")
       .expect(200);
 
@@ -725,9 +730,7 @@ describe("GET - /api/reviews/:review_id/comments", () => {
   test("should return only the number of comments specified by the limit", async () => {
     const {
       body: { total_count, comments },
-    } = await request(app)
-      .get("/api/reviews/2/comments?limit=1&p=2")
-      .expect(200);
+    } = await request.get("/api/reviews/2/comments?limit=1&p=2").expect(200);
 
     expect(Array.isArray(comments)).toBe(true);
     expect(comments).toHaveLength(1);
@@ -737,21 +740,21 @@ describe("GET - /api/reviews/:review_id/comments", () => {
   test("should return an empty array when given a valid review_id that doesn't have any associated comments", async () => {
     const {
       body: { comments },
-    } = await request(app).get("/api/reviews/7/comments").expect(200);
+    } = await request.get("/api/reviews/7/comments").expect(200);
 
     expect(comments).toHaveLength(0);
   });
   test("should return a 404 and a custom message when trying to access the comments of a review that doesn't exist in the database", async () => {
     const {
       body: { message },
-    } = await request(app).get("/api/reviews/15/comments").expect(404);
+    } = await request.get("/api/reviews/15/comments").expect(404);
 
     expect(message).toBe("Review not found");
   });
   test("should return a 400 and custom message when passed an invalid review_id", async () => {
     const {
       body: { message },
-    } = await request(app).get("/api/reviews/seven/comments").expect(400);
+    } = await request.get("/api/reviews/seven/comments").expect(400);
 
     expect(message).toBe("Bad request");
   });
@@ -761,7 +764,7 @@ describe("POST - /api/reviews/:review_id/comments", () => {
   test("should insert a new comment into the comments table and return the created comment object", async () => {
     const {
       body: { comment },
-    } = await request(app)
+    } = await request
       .post("/api/reviews/2/comments")
       .send({
         author: "philippaclaire9",
@@ -781,7 +784,7 @@ describe("POST - /api/reviews/:review_id/comments", () => {
   test("should ignore any additional fields as long as the required ones are presnt", async () => {
     const {
       body: { comment },
-    } = await request(app)
+    } = await request
       .post("/api/reviews/2/comments")
       .send({
         author: "philippaclaire9",
@@ -802,7 +805,7 @@ describe("POST - /api/reviews/:review_id/comments", () => {
   test("should return a 400 and custom message when an unregistered user tries to comment", async () => {
     const {
       body: { message },
-    } = await request(app)
+    } = await request
       .post("/api/reviews/2/comments")
       .send({
         author: "test_user",
@@ -815,7 +818,7 @@ describe("POST - /api/reviews/:review_id/comments", () => {
   test("should return a 400 and custom message when a required input field is missing", async () => {
     const {
       body: { message },
-    } = await request(app)
+    } = await request
       .post("/api/reviews/2/comments")
       .send({
         body: "test_body",
@@ -827,7 +830,7 @@ describe("POST - /api/reviews/:review_id/comments", () => {
   test("should return a 404 and a custom message when trying to post a comment to a review that doesn't exist in the database", async () => {
     const {
       body: { message },
-    } = await request(app)
+    } = await request
       .post("/api/reviews/15/comments")
       .send({
         author: "philippaclaire9",
@@ -840,7 +843,7 @@ describe("POST - /api/reviews/:review_id/comments", () => {
   test("should return a 400 and custom message when passed an invalid review_id", async () => {
     const {
       body: { message },
-    } = await request(app)
+    } = await request
       .post("/api/reviews/seven/comments")
       .send({
         author: "philippaclaire9",
@@ -856,7 +859,7 @@ describe("PATCH - /api/comments/:comment_id", () => {
   test("should update the votes field by the specified amount and return the amended comment", async () => {
     const {
       body: { comment },
-    } = await request(app)
+    } = await request
       .patch("/api/comments/6")
       .send({ inc_votes: 1 })
       .expect(200);
@@ -865,7 +868,7 @@ describe("PATCH - /api/comments/:comment_id", () => {
   test("should update the votes field by the specified amount and return the amended comment--should work with negative values too", async () => {
     const {
       body: { comment },
-    } = await request(app)
+    } = await request
       .patch("/api/comments/6")
       .send({ inc_votes: -1 })
       .expect(200);
@@ -874,7 +877,7 @@ describe("PATCH - /api/comments/:comment_id", () => {
   test("should update the comment body if passed the relevant field", async () => {
     const {
       body: { comment },
-    } = await request(app)
+    } = await request
       .patch("/api/comments/6")
       .send({ body: "Test" })
       .expect(200);
@@ -884,7 +887,7 @@ describe("PATCH - /api/comments/:comment_id", () => {
   test("should update the comment body if passed the relevant field", async () => {
     const {
       body: { comment },
-    } = await request(app)
+    } = await request
       .patch("/api/comments/6")
       .send({ body: "Test", inc_votes: -1 })
       .expect(200);
@@ -895,14 +898,14 @@ describe("PATCH - /api/comments/:comment_id", () => {
   test("should return a 400 and custom message when a required input field is missing", async () => {
     const {
       body: { message },
-    } = await request(app).patch("/api/comments/6").send({}).expect(400);
+    } = await request.patch("/api/comments/6").send({}).expect(400);
 
     expect(message).toBe("Missing required fields");
   });
   test("should return a 400 and custom message when input field is of the incorrect datatype", async () => {
     const {
       body: { message },
-    } = await request(app)
+    } = await request
       .patch("/api/comments/6")
       .send({ inc_votes: "twenty" })
       .expect(400);
@@ -912,7 +915,7 @@ describe("PATCH - /api/comments/:comment_id", () => {
   test("should return a 404 and a custom message when trying to update a comment that doesn't exist", async () => {
     const {
       body: { message },
-    } = await request(app)
+    } = await request
       .patch("/api/comments/7")
       .send({ inc_votes: 1 })
       .expect(404);
@@ -922,7 +925,7 @@ describe("PATCH - /api/comments/:comment_id", () => {
   test("should return a 400 and custom message when passed an invalid comment_id", async () => {
     const {
       body: { message },
-    } = await request(app)
+    } = await request
       .patch("/api/comments/seven")
       .send({ inc_votes: 1 })
       .expect(400);
@@ -933,7 +936,7 @@ describe("PATCH - /api/comments/:comment_id", () => {
 
 describe("DELETE - /api/comments/:comment_id", () => {
   test("should remove the specified comment from the database", () => {
-    return request(app)
+    return request
       .delete("/api/comments/6")
       .expect(204)
       .then(() => {
@@ -946,14 +949,14 @@ describe("DELETE - /api/comments/:comment_id", () => {
   test("should return a 400 and custom message when passed an invalid comment_id", async () => {
     const {
       body: { message },
-    } = await request(app).delete("/api/comments/seven").expect(400);
+    } = await request.delete("/api/comments/seven").expect(400);
 
     expect(message).toBe("Bad request");
   });
   test("should return a 404 and a custom message when trying to delete a comment that doesn't exist", async () => {
     const {
       body: { message },
-    } = await request(app).delete("/api/comments/7").expect(404);
+    } = await request.delete("/api/comments/7").expect(404);
 
     expect(message).toBe("Comment not found");
   });
