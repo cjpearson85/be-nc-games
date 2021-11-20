@@ -166,12 +166,12 @@ describe("GET - /api/users", () => {
   });
 });
 
-describe.skip("POST - /api/users", () => {
+describe("POST - /api/register", () => {
   test("should add a new user to the database and return the newly created user object ", async () => {
     const {
       body: { user },
     } = await request
-      .post("/api/users")
+      .post("/api/register")
       .send({
         username: "test_username",
         avatar_url: "https://fakeurl.com/test.png",
@@ -193,7 +193,7 @@ describe.skip("POST - /api/users", () => {
     const {
       body: { message },
     } = await request
-      .post("/api/users")
+      .post("/api/register")
       .send({
         username: "philippaclaire9",
         avatar_url: "https://fakeurl.com/test.png",
@@ -208,7 +208,7 @@ describe.skip("POST - /api/users", () => {
     const {
       body: { user },
     } = await request
-      .post("/api/users")
+      .post("/api/register")
       .send({
         username: "test_username",
         avatar_url: "https://fakeurl.com/test.png",
@@ -236,7 +236,7 @@ describe.skip("POST - /api/users", () => {
     const {
       body: { message },
     } = await request
-      .post("/api/users")
+      .post("/api/register")
       .send({
         avatar_url: "https://fakeurl.com/test.png",
         name: "John Doe",

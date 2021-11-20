@@ -4,6 +4,7 @@ const { insertToTable } = require("../db/utils/sql-queries.js");
 const {
   getSingleResult,
   getMultipleResults,
+  hashPassword,
 } = require("../helper-functions.js");
 
 exports.selectUsers = async ({ sort_by, order, limit, p }) => {
@@ -64,6 +65,8 @@ exports.checkUserCredentials = async (username) => {
 exports.insertUser = async (body) => {
   const columns = Object.keys(body);
   const values = Object.values(body);
+
+  if (values[3]) values[3] = await hashPassword(values[3]);
 
   let queryStr = insertToTable("users", columns, [values]);
   queryStr += ` RETURNING username, name, avatar_url`;
