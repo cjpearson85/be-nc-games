@@ -3,6 +3,7 @@ const {
   createRef,
   commentsFormatter,
   valuesFormatter,
+  usersFormatter,
 } = require("../utils/data-manipulation.js");
 const { insertToTable } = require("../utils/sql-queries.js");
 
@@ -61,7 +62,7 @@ const seed = async (data) => {
 
   table = "users";
   columns = ["username", "avatar_url", "name", "password"];
-  values = valuesFormatter(userData, columns);
+  values = await usersFormatter(userData, columns);
 
   const usersQuery = insertToTable(table, columns, values);
 

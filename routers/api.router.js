@@ -4,10 +4,10 @@ const reviewsRouter = require("./reviews.router");
 const usersRouter = require("./users.router");
 const commentsRouter = require("./comments.router");
 const apiRouter = require("express").Router();
-const app = require("express")();
 
 const endpoints = require("../endpoints.json");
 const { checkUserCredentials } = require("../models/users.models");
+const { comparePasswords } = require("../helper-functions");
 
 apiRouter.get("/", (req, res, next) => {
   res.status(200).send({ endpoints });
@@ -16,15 +16,16 @@ apiRouter.get("/", (req, res, next) => {
 apiRouter.post("/login", (req, res, next) => {
   const { username, password } = req.body;
   checkUserCredentials(username)
-    .then((user) => {
-      if (!user || password !== user.password)
-        res.status(401).send({ message: "invalid username or password" });
-      else {
+    .then(async (user) => {
+      const passwordOk = await comparePasswords(password, user.password);
+      if (user && passwordOk) {
         const token = jwt.sign(
           { user: user.username, iat: Date.now() },
           process.env.JWT_SECRET
         );
         res.status(200).send({ token });
+      } else {
+        res.status(401).send({ message: "invalid username or password" });
       }
     })
     .catch(() => {

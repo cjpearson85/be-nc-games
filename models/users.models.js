@@ -66,7 +66,7 @@ exports.insertUser = async (body) => {
   const values = Object.values(body);
 
   let queryStr = insertToTable("users", columns, [values]);
-  queryStr += ` RETURNING *`;
+  queryStr += ` RETURNING username, name, avatar_url`;
 
   return getSingleResult(queryStr);
 };
