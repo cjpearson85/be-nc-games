@@ -5,11 +5,7 @@ const commentsRouter = require("./comments.router");
 const apiRouter = require("express").Router();
 
 const endpoints = require("../endpoints.json");
-const {
-  loginUser,
-  authoriseUser,
-  postUser,
-} = require("../controllers/users.controllers");
+const { loginUser, postUser } = require("../controllers/users.controllers");
 
 apiRouter.get("/", (req, res, next) => {
   res.status(200).send({ endpoints });
@@ -17,7 +13,6 @@ apiRouter.get("/", (req, res, next) => {
 
 apiRouter.post("/register", postUser);
 apiRouter.post("/login", loginUser);
-apiRouter.use(authoriseUser);
 
 apiRouter.use("/categories", categoriesRouter);
 apiRouter.use("/reviews", reviewsRouter);

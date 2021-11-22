@@ -88,6 +88,14 @@ describe("GET - /api/categories", () => {
     });
     expect(categories).toBeSortedBy("slug", { ascending: true });
   });
+  test("should not require an authorised user to get the data", async () => {
+    const { body } = await request
+      .get("/api/categories")
+      .set("Authorization", "")
+      .expect(200);
+
+    expect(body).toHaveProperty("categories");
+  });
 });
 
 describe("POST - /api/categories", () => {
@@ -135,6 +143,20 @@ describe("POST - /api/categories", () => {
 
     expect(message).toBe("Unique field already exists");
   });
+  test("should return a 401 status code and custom message when an unauthorised user tries to post new category", async () => {
+    const {
+      body: { message },
+    } = await request
+      .post("/api/categories")
+      .set("Authorization", "")
+      .send({
+        slug: "dexterity",
+        description: "test_description",
+      })
+      .expect(401);
+
+    expect(message).toBe("Unauthorised");
+  });
 });
 
 describe("GET - /api/users", () => {
@@ -163,6 +185,14 @@ describe("GET - /api/users", () => {
       .expect(200);
 
     expect(users).toBeSortedBy("total_likes", { descending: true });
+  });
+  test("should not require an authorised user to get the data", async () => {
+    const { body } = await request
+      .get("/api/users")
+      .set("Authorization", "")
+      .expect(200);
+
+    expect(body).toHaveProperty("users");
   });
 });
 
@@ -269,6 +299,14 @@ describe("GET - /api/users/:username", () => {
 
     expect(message).toBe("User not found");
   });
+  test("should not require an authorised user to get the data", async () => {
+    const { body } = await request
+      .get("/api/users/philippaclaire9")
+      .set("Authorization", "")
+      .expect(200);
+
+    expect(body).toHaveProperty("user");
+  });
 });
 
 describe("PATCH - /api/users/:username", () => {
@@ -323,6 +361,19 @@ describe("PATCH - /api/users/:username", () => {
       .expect(404);
 
     expect(message).toBe("User not found");
+  });
+  test("should return a 401 status code and custom message when an unauthorised user tries to edit user details", async () => {
+    const {
+      body: { message },
+    } = await request
+      .patch("/api/users/philippaclaire9")
+      .set("Authorization", "")
+      .send({
+        avatar_url: "https://fakeurl.com/test.png",
+      })
+      .expect(401);
+
+    expect(message).toBe("Unauthorised");
   });
 });
 
@@ -463,6 +514,14 @@ describe("GET - /api/reviews", () => {
     expect(total_count).toBe(1);
     expect(reviews[0].review_id).toBe(14);
   });
+  test("should not require an authorised user to get the data", async () => {
+    const { body } = await request
+      .get("/api/reviews")
+      .set("Authorization", "")
+      .expect(200);
+
+    expect(body).toHaveProperty("reviews");
+  });
 });
 
 describe("POST - /api/reviews", () => {
@@ -550,6 +609,25 @@ describe("POST - /api/reviews", () => {
 
     expect(message).toBe("Insert or update violates foreign key constraint");
   });
+  test("should return a 401 status code and custom message when an unauthorised user tries to post a review", async () => {
+    const {
+      body: { message },
+    } = await request
+      .post("/api/reviews")
+      .set("Authorization", "")
+      .send({
+        owner: "dav3rid",
+        title: "test_title",
+        review_img_url:
+          "https://images.pexels.com/photos/278918/pexels-photo-278918.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
+        review_body: "test_body",
+        designer: "Gamey McGameface",
+        category: "dexterity",
+      })
+      .expect(401);
+
+    expect(message).toBe("Unauthorised");
+  });
 });
 
 describe("GET - /api/reviews/:review_id", () => {
@@ -587,6 +665,14 @@ describe("GET - /api/reviews/:review_id", () => {
     } = await request.get("/api/reviews/100").expect(404);
 
     expect(message).toBe("Review not found");
+  });
+  test("should not require an authorised user to get the data", async () => {
+    const { body } = await request
+      .get("/api/reviews/2")
+      .set("Authorization", "")
+      .expect(200);
+
+    expect(body).toHaveProperty("review");
   });
 });
 
@@ -669,6 +755,17 @@ describe("PATCH - /api/reviews/:review_id", () => {
 
     expect(message).toBe("Bad request");
   });
+  test("should return a 401 status code and custom message when an unauthorised user tries to edit a review", async () => {
+    const {
+      body: { message },
+    } = await request
+      .patch("/api/reviews")
+      .set("Authorization", "")
+      .send({ inc_votes: 20 })
+      .expect(401);
+
+    expect(message).toBe("Unauthorised");
+  });
 });
 
 describe("DELETE - /api/reviews/:review_id", () => {
@@ -700,6 +797,16 @@ describe("DELETE - /api/reviews/:review_id", () => {
     } = await request.delete("/api/reviews/15").expect(404);
 
     expect(message).toBe("Review not found");
+  });
+  test("should return a 401 status code and custom message when an unauthorised user tries to delete a review", async () => {
+    const {
+      body: { message },
+    } = await request
+      .delete("/api/reviews/15")
+      .set("Authorization", "")
+      .expect(401);
+
+    expect(message).toBe("Unauthorised");
   });
 });
 
@@ -761,6 +868,14 @@ describe("GET - /api/reviews/:review_id/comments", () => {
     } = await request.get("/api/reviews/seven/comments").expect(400);
 
     expect(message).toBe("Bad request");
+  });
+  test("should not require an authorised user to get the data", async () => {
+    const { body } = await request
+      .get("/api/reviews/7/comments")
+      .set("Authorization", "")
+      .expect(200);
+
+    expect(body).toHaveProperty("comments");
   });
 });
 
@@ -857,6 +972,20 @@ describe("POST - /api/reviews/:review_id/comments", () => {
 
     expect(message).toBe("Bad request");
   });
+  test("should return a 401 status code and custom message when an unauthorised user tries to post a comment", async () => {
+    const {
+      body: { message },
+    } = await request
+      .post("/api/reviews/2/comments")
+      .set("Authorization", "")
+      .send({
+        author: "philippaclaire9",
+        body: "test body",
+      })
+      .expect(401);
+
+    expect(message).toBe("Unauthorised");
+  });
 });
 
 describe("PATCH - /api/comments/:comment_id", () => {
@@ -936,6 +1065,17 @@ describe("PATCH - /api/comments/:comment_id", () => {
 
     expect(message).toBe("Bad request");
   });
+  test("should return a 401 status code and custom message when an unauthorised user tries to edit a comment", async () => {
+    const {
+      body: { message },
+    } = await request
+      .patch("/api/comments/6")
+      .set("Authorization", "")
+      .send({ inc_votes: 1 })
+      .expect(401);
+
+    expect(message).toBe("Unauthorised");
+  });
 });
 
 describe("DELETE - /api/comments/:comment_id", () => {
@@ -963,5 +1103,15 @@ describe("DELETE - /api/comments/:comment_id", () => {
     } = await request.delete("/api/comments/7").expect(404);
 
     expect(message).toBe("Comment not found");
+  });
+  test("should return a 401 status code and custom message when an unauthorised user tries to delete a comment", async () => {
+    const {
+      body: { message },
+    } = await request
+      .delete("/api/comments/6")
+      .set("Authorization", "")
+      .expect(401);
+
+    expect(message).toBe("Unauthorised");
   });
 });
