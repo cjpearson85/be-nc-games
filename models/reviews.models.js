@@ -36,7 +36,7 @@ exports.selectReviews = async ({
     category !== undefined
   ) {
     return Promise.reject({ status: 404, message: "Category not found" });
-  } 
+  }
 
   let queryValues = [];
   let queryStr = `
@@ -52,8 +52,8 @@ exports.selectReviews = async ({
     queryStr += ` WHERE category = $${queryCount}`;
     queryValues.push(category);
     queryCount++;
-  } 
-  
+  }
+
   if (title) {
     const titleInsert = `%${title}%`;
     if (queryCount === 1) {
@@ -139,31 +139,46 @@ exports.selectReviewById = async (review_id) => {
   return getSingleResult(queryStr, [review_id]);
 };
 
-exports.updateReviewById = async (review_id, body) => {
-  let pairs = Object.entries(body).filter((pair) => {
-    const [, value] = pair;
-    return value;
-  });
-  
+exports.updateReviewById = async (review_id, user, body) => {
+  // let pairs = Object.entries(body).filter((pair) => {
+  //   const [, value] = pair;
+  //   return value;
+  // });
+
   if (Object.is(parseInt(review_id), NaN)) {
     return Promise.reject({ status: 400, message: "Bad request" });
-  } else if (pairs.length < 1) {
-    return Promise.reject({ status: 400, message: "Missing required fields" });
   }
+  // else if (pairs.length < 1) {
+  //   return Promise.reject({ status: 400, message: "Missing required fields" });
+  // }
+
+  const review = await this.selectReviewById(review_id);
+  // if (review.owner !== user) {
+  //   return Promise.reject({ status: 401, message: "Invalid user" });
+  // }
 
   let queryStr = `
     UPDATE reviews 
     SET `;
 
-  pairs.forEach((pair) => {
-    const [key, value] = pair;
-    if (key === 'votes') {
-      const newVotes = `${key} + ${value}`
-      queryStr += format(`votes = %s, `, newVotes);
-    } else {
-      queryStr += format(`%I = %L, `, key, value);
-    }
-  });
+  // pairs.forEach((pair) => {
+  //   const [key, value] = pair;
+  //   if (key === "votes") {
+  //     const newVotes = `${key} + ${value}`;
+  //     queryStr += format(`votes = %s, `, newVotes);
+  //   } else {
+  //     queryStr += format(`%I = %L, `, key, value);
+  //   }
+  // });
+
+  if (review.owner !== user && body.votes) {
+    const newVotes = `votes + ${body.votes}`;
+    queryStr += format(`votes = %s, `, newVotes);
+  } else if (review.owner === user && body.review_body) {
+    queryStr += format(`review_body = %L, `, body.review_body);
+  } else {
+    return Promise.reject({ status: 400, message: "Missing required fields" });
+  }
 
   queryStr = queryStr.slice(0, -2);
   queryStr += `
@@ -174,16 +189,22 @@ exports.updateReviewById = async (review_id, body) => {
   return getSingleResult(queryStr, [review_id]);
 };
 
-exports.removeReviewById = async (review_id) => {
+exports.removeReviewById = async (review_id, user) => {
   if (Object.is(parseInt(review_id), NaN)) {
     return Promise.reject({ status: 400, message: "Bad request" });
+  }
+
+  const review = await this.selectReviewById(review_id);
+  if (review.owner !== user) {
+    return Promise.reject({ status: 400, message: "Invalid user" });
   }
 
   return getSingleResult(
     `
     DELETE FROM reviews
     WHERE review_id = $1
-    RETURNING review_id;`,
+    RETURNING review_id;
+    `,
     [review_id]
   );
 };

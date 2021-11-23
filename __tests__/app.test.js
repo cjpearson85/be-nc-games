@@ -1,4 +1,5 @@
 const db = require("../db/connection.js");
+const jwt = require("jsonwebtoken");
 const app = require("../app.js");
 const defaults = require("superagent-defaults");
 const request = defaults(require("supertest")(app));
@@ -11,11 +12,20 @@ beforeEach(async () => {
     body: { token },
   } = await request
     .post("/api/login")
-    .send({ username: "mallionaire", password: "secure123" });
+    .send({ username: "philippaclaire9", password: "secure123" });
   request.set("Authorization", `BEARER ${token}`);
 });
 
 afterAll(() => db.end());
+
+// const setUser = (username) => {
+//   const token = jwt.sign(
+//     { user: username, iat: Date.now() },
+//     process.env.JWT_SECRET
+//   );
+// request.set("Authorization", `BEARER ${token}`);
+//   return ["Authorization", `BEARER ${token}`];
+// };
 
 describe("GET - /api", () => {
   test("should return a json representation of all the available endpoints of the api", async () => {
@@ -350,18 +360,18 @@ describe("PATCH - /api/users/:username", () => {
 
     expect(message).toBe("Missing required fields");
   });
-  test("should return a 404 if an passed a valid username that doesn't exist in the database", async () => {
-    const {
-      body: { message },
-    } = await request
-      .patch("/api/users/dog")
-      .send({
-        avatar_url: "https://fakeurl.com/test.png",
-      })
-      .expect(404);
+  // test("should return a 404 if an passed a valid username that doesn't exist in the database", async () => {
+  //   const {
+  //     body: { message },
+  //   } = await request
+  //     .patch("/api/users/dog")
+  //     .send({
+  //       avatar_url: "https://fakeurl.com/test.png",
+  //     })
+  //     .expect(404);
 
-    expect(message).toBe("User not found");
-  });
+  //   expect(message).toBe("User not found");
+  // });
   test("should return a 401 status code and custom message when an unauthorised user tries to edit user details", async () => {
     const {
       body: { message },
@@ -497,7 +507,7 @@ describe("GET - /api/reviews", () => {
   });
   test("should return all the reviews created in the last 10 minutes", async () => {
     await request.post("/api/reviews").send({
-      owner: "dav3rid",
+      owner: "philippaclaire9",
       title: "test_title",
       review_img_url:
         "https://images.pexels.com/photos/278918/pexels-photo-278918.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
@@ -531,7 +541,6 @@ describe("POST - /api/reviews", () => {
     } = await request
       .post("/api/reviews")
       .send({
-        owner: "dav3rid",
         title: "test_title",
         review_img_url:
           "https://images.pexels.com/photos/278918/pexels-photo-278918.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
@@ -543,7 +552,7 @@ describe("POST - /api/reviews", () => {
 
     expect(review).toMatchObject({
       review_id: 14,
-      owner: "dav3rid",
+      owner: "philippaclaire9",
       title: "test_title",
       review_img_url:
         "https://images.pexels.com/photos/278918/pexels-photo-278918.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
@@ -564,7 +573,6 @@ describe("POST - /api/reviews", () => {
     } = await request
       .post("/api/reviews")
       .send({
-        owner: "dav3rid",
         review_body: "test_body",
         designer: "Gamey McGameface",
         category: "dexterity",
@@ -573,31 +581,29 @@ describe("POST - /api/reviews", () => {
 
     expect(message).toBe("Missing required fields");
   });
-  test("should return a 404 status code and message if owner not in the db", async () => {
-    const {
-      body: { message },
-    } = await request
-      .post("/api/reviews")
-      .send({
-        owner: "david",
-        title: "test_title",
-        review_img_url:
-          "https://images.pexels.com/photos/278918/pexels-photo-278918.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
-        review_body: "test_body",
-        designer: "Gamey McGameface",
-        category: "dexterity",
-      })
-      .expect(404);
+  // test("should return a 404 status code and message if owner not in the db", async () => {
+  //   const {
+  //     body: { message },
+  //   } = await request
+  //     .post("/api/reviews")
+  //     .send({
+  //       title: "test_title",
+  //       review_img_url:
+  //         "https://images.pexels.com/photos/278918/pexels-photo-278918.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
+  //       review_body: "test_body",
+  //       designer: "Gamey McGameface",
+  //       category: "dexterity",
+  //     })
+  //     .expect(404);
 
-    expect(message).toBe("Insert or update violates foreign key constraint");
-  });
+  //   expect(message).toBe("Insert or update violates foreign key constraint");
+  // });
   test("should return a 404 status code and message if category not in the db", async () => {
     const {
       body: { message },
     } = await request
       .post("/api/reviews")
       .send({
-        owner: "dav3rid",
         title: "test_title",
         review_img_url:
           "https://images.pexels.com/photos/278918/pexels-photo-278918.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
@@ -616,7 +622,6 @@ describe("POST - /api/reviews", () => {
       .post("/api/reviews")
       .set("Authorization", "")
       .send({
-        owner: "dav3rid",
         title: "test_title",
         review_img_url:
           "https://images.pexels.com/photos/278918/pexels-photo-278918.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
@@ -697,27 +702,47 @@ describe("PATCH - /api/reviews/:review_id", () => {
 
     expect(review.votes).toBe(80);
   });
+  test("users should not be able to vote on their own reviews", async () => {
+    const {
+      body: { message },
+    } = await request
+      .patch("/api/reviews/2")
+      .send({ inc_votes: 20 })
+      .expect(400);
+
+    expect(message).toBe("Missing required fields");
+  });
   test("should update the review body if passed the relevant field", async () => {
     const {
       body: { review },
     } = await request
-      .patch("/api/reviews/12")
+      .patch("/api/reviews/2")
       .send({ review_body: "Test" })
       .expect(200);
 
     expect(review.review_body).toBe("Test");
   });
-  test("should still work when updating multiple fields at once", async () => {
+  test("only the owner of the review should be able to edit fields other than votes", async () => {
     const {
-      body: { review },
+      body: { message },
     } = await request
       .patch("/api/reviews/12")
-      .send({ inc_votes: 20, review_body: "Test" })
-      .expect(200);
+      .send({ review_body: "Test" })
+      .expect(400);
 
-    expect(review.votes).toBe(120);
-    expect(review.review_body).toBe("Test");
+    expect(message).toBe("Missing required fields");
   });
+  // test("should still work when updating multiple fields at once", async () => {
+  //   const {
+  //     body: { review },
+  //   } = await request
+  //     .patch("/api/reviews/12")
+  //     .send({ inc_votes: 20, review_body: "Test" })
+  //     .expect(200);
+
+  //   expect(review.votes).toBe(120);
+  //   expect(review.review_body).toBe("Test");
+  // });
   test("should return a 400 and custom message when a required input field is missing", async () => {
     const {
       body: { message },
@@ -769,6 +794,7 @@ describe("PATCH - /api/reviews/:review_id", () => {
 });
 
 describe("DELETE - /api/reviews/:review_id", () => {
+  // request.set(...setUser("philippaclaire9"));
   test("should remove the specified review and all associated comments from the database", () => {
     return request
       .delete("/api/reviews/2")
@@ -886,7 +912,6 @@ describe("POST - /api/reviews/:review_id/comments", () => {
     } = await request
       .post("/api/reviews/2/comments")
       .send({
-        author: "philippaclaire9",
         body: "test body",
       })
       .expect(201);
@@ -906,7 +931,6 @@ describe("POST - /api/reviews/:review_id/comments", () => {
     } = await request
       .post("/api/reviews/2/comments")
       .send({
-        author: "philippaclaire9",
         body: "test body",
         extra_key: "test",
       })
@@ -921,28 +945,23 @@ describe("POST - /api/reviews/:review_id/comments", () => {
       body: "test body",
     });
   });
-  test("should return a 400 and custom message when an unregistered user tries to comment", async () => {
-    const {
-      body: { message },
-    } = await request
-      .post("/api/reviews/2/comments")
-      .send({
-        author: "test_user",
-        body: "test_body",
-      })
-      .expect(404);
+  // test("should return a 400 and custom message when an unregistered user tries to comment", async () => {
+  //   const {
+  //     body: { message },
+  //   } = await request
+  //     .post("/api/reviews/2/comments")
+  //     .send({
+  //       author: "test_user",
+  //       body: "test_body",
+  //     })
+  //     .expect(404);
 
-    expect(message).toBe("Insert or update violates foreign key constraint");
-  });
+  //   expect(message).toBe("Insert or update violates foreign key constraint");
+  // });
   test("should return a 400 and custom message when a required input field is missing", async () => {
     const {
       body: { message },
-    } = await request
-      .post("/api/reviews/2/comments")
-      .send({
-        body: "test_body",
-      })
-      .expect(400);
+    } = await request.post("/api/reviews/2/comments").send({}).expect(400);
 
     expect(message).toBe("Missing required fields");
   });
@@ -952,7 +971,6 @@ describe("POST - /api/reviews/:review_id/comments", () => {
     } = await request
       .post("/api/reviews/15/comments")
       .send({
-        author: "philippaclaire9",
         body: "test body",
       })
       .expect(404);
@@ -965,7 +983,6 @@ describe("POST - /api/reviews/:review_id/comments", () => {
     } = await request
       .post("/api/reviews/seven/comments")
       .send({
-        author: "philippaclaire9",
         body: "test body",
       })
       .expect(400);
@@ -979,7 +996,6 @@ describe("POST - /api/reviews/:review_id/comments", () => {
       .post("/api/reviews/2/comments")
       .set("Authorization", "")
       .send({
-        author: "philippaclaire9",
         body: "test body",
       })
       .expect(401);
@@ -993,19 +1009,28 @@ describe("PATCH - /api/comments/:comment_id", () => {
     const {
       body: { comment },
     } = await request
-      .patch("/api/comments/6")
+      .patch("/api/comments/2")
       .send({ inc_votes: 1 })
       .expect(200);
-    expect(comment.votes).toBe(11);
+    expect(comment.votes).toBe(14);
   });
   test("should update the votes field by the specified amount and return the amended comment--should work with negative values too", async () => {
     const {
       body: { comment },
     } = await request
-      .patch("/api/comments/6")
+      .patch("/api/comments/2")
       .send({ inc_votes: -1 })
       .expect(200);
-    expect(comment.votes).toBe(9);
+    expect(comment.votes).toBe(12);
+  });
+  test("users should not be able to vote on their own comments", async () => {
+    const {
+      body: { message },
+    } = await request
+      .patch("/api/comments/6")
+      .send({ inc_votes: 1 })
+      .expect(400);
+    expect(message).toBe("Missing required fields");
   });
   test("should update the comment body if passed the relevant field", async () => {
     const {
@@ -1017,17 +1042,27 @@ describe("PATCH - /api/comments/:comment_id", () => {
 
     expect(comment.body).toBe("Test");
   });
-  test("should update the comment body if passed the relevant field", async () => {
+  test("only the author of the comment should be able to edit fields other than votes", async () => {
     const {
-      body: { comment },
+      body: { message },
     } = await request
-      .patch("/api/comments/6")
-      .send({ body: "Test", inc_votes: -1 })
-      .expect(200);
+      .patch("/api/comments/2")
+      .send({ body: "Test" })
+      .expect(400);
 
-    expect(comment.body).toBe("Test");
-    expect(comment.votes).toBe(9);
+    expect(message).toBe("Missing required fields");
   });
+  // test("should update the comment body if passed the relevant field", async () => {
+  //   const {
+  //     body: { comment },
+  //   } = await request
+  //     .patch("/api/comments/6")
+  //     .send({ body: "Test", inc_votes: -1 })
+  //     .expect(200);
+
+  //   expect(comment.body).toBe("Test");
+  //   expect(comment.votes).toBe(9);
+  // });
   test("should return a 400 and custom message when a required input field is missing", async () => {
     const {
       body: { message },
@@ -1039,7 +1074,7 @@ describe("PATCH - /api/comments/:comment_id", () => {
     const {
       body: { message },
     } = await request
-      .patch("/api/comments/6")
+      .patch("/api/comments/2")
       .send({ inc_votes: "twenty" })
       .expect(400);
 
@@ -1079,16 +1114,18 @@ describe("PATCH - /api/comments/:comment_id", () => {
 });
 
 describe("DELETE - /api/comments/:comment_id", () => {
-  test("should remove the specified comment from the database", () => {
-    return request
-      .delete("/api/comments/6")
-      .expect(204)
-      .then(() => {
-        return db.query("SELECT comment_id FROM comments;");
-      })
-      .then(({ rows }) => {
-        expect(rows).toHaveLength(5);
-      });
+  test("should remove the specified comment from the database", async () => {
+    await request.delete("/api/comments/6").expect(204);
+
+    const { rows } = await db.query("SELECT comment_id FROM comments;");
+    expect(rows).toHaveLength(5);
+  });
+  test("should not remove the specified comment from the database if user doesn't match comment author", async () => {
+    const {
+      body: { message },
+    } = await request.delete("/api/comments/5").expect(400);
+
+    expect(message).toBe("Invalid user");
   });
   test("should return a 400 and custom message when passed an invalid comment_id", async () => {
     const {

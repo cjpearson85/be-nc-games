@@ -58,6 +58,8 @@ exports.patchUserByUsername = (req, res, next) => {
   const { username } = req.params;
   const { avatar_url, name } = req.body;
 
+  username !== req.user && res.status(401).send({ message: "Invalid user" });
+
   updateUserByUsername(username, { avatar_url, name })
     .then((user) => {
       res.status(200).send({ user });
@@ -94,10 +96,11 @@ exports.authoriseUser = (req, res, next) => {
   if (!authorization) res.status(401).send({ message: "Unauthorised" });
   else {
     const token = authorization.split(" ")[1];
-    jwt.verify(token, process.env.JWT_SECRET, (err, res) => {
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
       if (err) {
         res.status(401).send({ message: "Unauthorised" });
       } else {
+        req.user = decoded.user;
         next();
       }
     });

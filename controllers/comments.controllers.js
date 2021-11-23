@@ -22,8 +22,9 @@ exports.getCommentsByReviewId = (req, res, next) => {
 };
 
 exports.postCommentByReviewId = (req, res, next) => {
+  const author = req.user;
   const { review_id } = req.params;
-  const { author, body } = req.body;
+  const { body } = req.body;
 
   insertCommentByReviewId(review_id, { author, body })
     .then((comment) => {
@@ -32,11 +33,14 @@ exports.postCommentByReviewId = (req, res, next) => {
     .catch(next);
 };
 
-exports.deleteCommentById = (req, res, next) => {
+exports.patchCommentById = (req, res, next) => {
+  const user = req.user;
   const { comment_id } = req.params;
-  removeCommentById(comment_id)
-    .then(() => {
-      res.status(204).send();
+  const { body, inc_votes: votes } = req.body;
+
+  updateCommentById(comment_id, user, { body, votes })
+    .then((comment) => {
+      res.status(200).send({ comment });
     })
     .catch((err) => {
       if (!err.message) err.message = "Comment not found";
@@ -44,13 +48,13 @@ exports.deleteCommentById = (req, res, next) => {
     });
 };
 
-exports.patchCommentById = (req, res, next) => {
+exports.deleteCommentById = (req, res, next) => {
+  const user = req.user;
   const { comment_id } = req.params;
-  const { body, inc_votes: votes } = req.body;
 
-  updateCommentById(comment_id, { body, votes })
-    .then((comment) => {
-      res.status(200).send({ comment });
+  removeCommentById(comment_id, user)
+    .then(() => {
+      res.status(204).send();
     })
     .catch((err) => {
       if (!err.message) err.message = "Comment not found";
