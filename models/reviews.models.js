@@ -139,18 +139,15 @@ exports.selectReviewById = async (review_id) => {
   return getSingleResult(queryStr, [review_id]);
 };
 
-exports.updateReviewById = async (review_id, user, { votes, review_body }) => {
-  // let pairs = Object.entries(body).filter((pair) => {
-  //   const [, value] = pair;
-  //   return value;
-  // });
+exports.updateReviewById = async (review_id, user, body) => {
+  let pairs = Object.entries(body).filter((pair) => {
+    const [, value] = pair;
+    return value;
+  });
 
   if (Object.is(parseInt(review_id), NaN)) {
     return Promise.reject({ status: 400, message: "Bad request" });
   }
-  // else if (pairs.length < 1) {
-  //   return Promise.reject({ status: 400, message: "Missing required fields" });
-  // }
 
   const review = await this.selectReviewById(review_id);
 
@@ -158,17 +155,8 @@ exports.updateReviewById = async (review_id, user, { votes, review_body }) => {
     UPDATE reviews 
     SET `;
 
-  // pairs.forEach((pair) => {
-  //   const [key, value] = pair;
-  //   if (key === "votes") {
-  //     const newVotes = `${key} + ${value}`;
-  //     queryStr += format(`votes = %s, `, newVotes);
-  //   } else {
-  //     queryStr += format(`%I = %L, `, key, value);
-  //   }
-  // });
-
   const usersReview = review.owner === user;
+  const { votes } = body;
 
   if (usersReview && votes) {
     return Promise.reject({
@@ -178,17 +166,17 @@ exports.updateReviewById = async (review_id, user, { votes, review_body }) => {
   } else if (!usersReview && votes) {
     const newVotes = `votes + ${votes}`;
     queryStr += format(`votes = %s`, newVotes);
-  } else if (!usersReview && review_body) {
+  } else if (!usersReview && pairs.length) {
     return Promise.reject({
       status: 403,
       message: "User cannot edit other user's review",
     });
-  } else if (usersReview && review_body) {
-    queryStr += format(
-      `review_body = %L, edited_at = %L`,
-      review_body,
-      new Date()
-    );
+  } else if (usersReview && pairs.length) {
+    pairs.forEach((pair) => {
+      const [key, value] = pair;
+      queryStr += format(`%I = %L, `, key, value);
+    });
+    queryStr += format(`edited_at = %L`, new Date());
   } else {
     return Promise.reject({ status: 400, message: "Missing required fields" });
   }

@@ -747,17 +747,35 @@ describe("PATCH - /api/reviews/:review_id", () => {
 
     expect(message).toBe("User cannot edit other user's review");
   });
-  // test("should still work when updating multiple fields at once", async () => {
-  //   const {
-  //     body: { review },
-  //   } = await request
-  //     .patch("/api/reviews/12")
-  //     .send({ inc_votes: 20, review_body: "Test" })
-  //     .expect(200);
+  test("should still work when updating multiple fields at once", async () => {
+    const {
+      body: { review },
+    } = await request
+      .patch("/api/reviews/2")
+      .send({
+        title: "Jenga; it's awesome!",
+        review_body: "Test",
+        designer: "Leslie Stott",
+        review_img_url:
+          "https://www.golenbock.com/wp-content/uploads/2016/01/placeholder-user.png",
+        category: "children's games",
+      })
+      .expect(200);
 
-  //   expect(review.votes).toBe(120);
-  //   expect(review.review_body).toBe("Test");
-  // });
+    expect(review).toMatchObject({
+      owner: "philippaclaire9",
+      title: "Jenga; it's awesome!",
+      review_id: 2,
+      review_body: "Test",
+      designer: "Leslie Stott",
+      review_img_url:
+        "https://www.golenbock.com/wp-content/uploads/2016/01/placeholder-user.png",
+      category: "children's games",
+      created_at: "2021-01-18T10:01:41.251Z",
+      edited_at: expect.any(String),
+      votes: 5,
+    });
+  });
   test("should return a 400 and custom message when a required input field is missing", async () => {
     const {
       body: { message },
