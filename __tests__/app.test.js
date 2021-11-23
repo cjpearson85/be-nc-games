@@ -1,5 +1,4 @@
 const db = require("../db/connection.js");
-const jwt = require("jsonwebtoken");
 const app = require("../app.js");
 const defaults = require("superagent-defaults");
 const request = defaults(require("supertest")(app));
@@ -8,6 +7,9 @@ const seed = require("../db/seeds/seed.js");
 
 beforeEach(async () => {
   await seed(testData);
+});
+
+beforeAll(async () => {
   const {
     body: { token },
   } = await request
@@ -17,15 +19,6 @@ beforeEach(async () => {
 });
 
 afterAll(() => db.end());
-
-// const setUser = (username) => {
-//   const token = jwt.sign(
-//     { user: username, iat: Date.now() },
-//     process.env.JWT_SECRET
-//   );
-// request.set("Authorization", `BEARER ${token}`);
-//   return ["Authorization", `BEARER ${token}`];
-// };
 
 describe("GET - /api", () => {
   test("should return a json representation of all the available endpoints of the api", async () => {
@@ -47,8 +40,89 @@ describe("GET - /api/invalidpath", () => {
   });
 });
 
-describe("/login", () => {
-  test("POST responds with an access token given correct username and password", async () => {
+describe("POST - /api/register", () => {
+  test("should add a new user to the database and return the newly created user object ", async () => {
+    const {
+      body: { user },
+    } = await request
+      .post("/api/register")
+      .send({
+        username: "test_username",
+        avatar_url: "https://fakeurl.com/test.png",
+        name: "John Doe",
+        password: "secure123",
+      })
+      .expect(201);
+
+    expect(user).toMatchObject({
+      username: "test_username",
+      avatar_url: "https://fakeurl.com/test.png",
+      name: "John Doe",
+    });
+
+    const { rowCount } = await db.query(`SELECT * FROM users`);
+    expect(rowCount).toBe(5);
+  });
+  test("should return a 400 and message if provided username already exists", async () => {
+    const {
+      body: { message },
+    } = await request
+      .post("/api/register")
+      .send({
+        username: "philippaclaire9",
+        avatar_url: "https://fakeurl.com/test.png",
+        name: "John Doe",
+        password: "secure123",
+      })
+      .expect(400);
+
+    expect(message).toBe("Unique field already exists");
+  });
+  test("should ignore any additional fields beyond the specified ones", async () => {
+    const {
+      body: { user },
+    } = await request
+      .post("/api/register")
+      .send({
+        username: "test_username",
+        avatar_url: "https://fakeurl.com/test.png",
+        name: "John Doe",
+        password: "secure123",
+        address: "123 Fake Street",
+      })
+      .expect(201);
+
+    expect(user).toMatchObject({
+      username: "test_username",
+      avatar_url: "https://fakeurl.com/test.png",
+      name: "John Doe",
+    });
+    expect(user).toEqual(
+      expect.not.objectContaining({
+        username: "test_username",
+        avatar_url: "https://fakeurl.com/test.png",
+        name: "John Doe",
+        address: "123 Fake Street",
+      })
+    );
+  });
+  test("should return a 400 status code and message if missing any required input fields", async () => {
+    const {
+      body: { message },
+    } = await request
+      .post("/api/register")
+      .send({
+        avatar_url: "https://fakeurl.com/test.png",
+        name: "John Doe",
+      })
+      .expect(400);
+
+    expect(message).toBe("Missing required fields");
+  });
+});
+
+describe("POST - /api/login", () => {
+  test("responds with an access token given correct username and password", async () => {
     const { body } = await request
       .post("/api/login")
       .set("Authorization", "")
@@ -57,7 +131,7 @@ describe("/login", () => {
 
     expect(body).toHaveProperty("token");
   });
-  test("POST responds with status 401 for an incorrect password", async () => {
+  test("responds with status 401 for an incorrect password", async () => {
     const {
       body: { message },
     } = await request
@@ -68,7 +142,7 @@ describe("/login", () => {
 
     expect(message).toEqual("invalid username or password");
   });
-  test("POST responds with status 401 for an incorrect username", async () => {
+  test("responds with status 401 for an incorrect username", async () => {
     const {
       body: { message },
     } = await request
@@ -203,87 +277,6 @@ describe("GET - /api/users", () => {
       .expect(200);
 
     expect(body).toHaveProperty("users");
-  });
-});
-
-describe("POST - /api/register", () => {
-  test("should add a new user to the database and return the newly created user object ", async () => {
-    const {
-      body: { user },
-    } = await request
-      .post("/api/register")
-      .send({
-        username: "test_username",
-        avatar_url: "https://fakeurl.com/test.png",
-        name: "John Doe",
-        password: "secure123",
-      })
-      .expect(201);
-
-    expect(user).toMatchObject({
-      username: "test_username",
-      avatar_url: "https://fakeurl.com/test.png",
-      name: "John Doe",
-    });
-
-    const { rowCount } = await db.query(`SELECT * FROM users`);
-    expect(rowCount).toBe(5);
-  });
-  test("should return a 400 and message if provided username already exists", async () => {
-    const {
-      body: { message },
-    } = await request
-      .post("/api/register")
-      .send({
-        username: "philippaclaire9",
-        avatar_url: "https://fakeurl.com/test.png",
-        name: "John Doe",
-        password: "secure123",
-      })
-      .expect(400);
-
-    expect(message).toBe("Unique field already exists");
-  });
-  test("should ignore any additional fields beyond the specified ones", async () => {
-    const {
-      body: { user },
-    } = await request
-      .post("/api/register")
-      .send({
-        username: "test_username",
-        avatar_url: "https://fakeurl.com/test.png",
-        name: "John Doe",
-        password: "secure123",
-        address: "123 Fake Street",
-      })
-      .expect(201);
-
-    expect(user).toMatchObject({
-      username: "test_username",
-      avatar_url: "https://fakeurl.com/test.png",
-      name: "John Doe",
-    });
-    expect(user).toEqual(
-      expect.not.objectContaining({
-        username: "test_username",
-        avatar_url: "https://fakeurl.com/test.png",
-        name: "John Doe",
-        address: "123 Fake Street",
-      })
-    );
-  });
-  test("should return a 400 status code and message if missing any required input fields", async () => {
-    const {
-      body: { message },
-    } = await request
-      .post("/api/register")
-      .send({
-        avatar_url: "https://fakeurl.com/test.png",
-        name: "John Doe",
-      })
-      .expect(400);
-
-    expect(message).toBe("Missing required fields");
   });
 });
 
