@@ -139,7 +139,7 @@ exports.selectReviewById = async (review_id) => {
   return getSingleResult(queryStr, [review_id]);
 };
 
-exports.updateReviewById = async (review_id, user, body) => {
+exports.updateReviewById = async (review_id, user, { votes, review_body }) => {
   // let pairs = Object.entries(body).filter((pair) => {
   //   const [, value] = pair;
   //   return value;
@@ -153,9 +153,6 @@ exports.updateReviewById = async (review_id, user, body) => {
   // }
 
   const review = await this.selectReviewById(review_id);
-  // if (review.owner !== user) {
-  //   return Promise.reject({ status: 401, message: "Invalid user" });
-  // }
 
   let queryStr = `
     UPDATE reviews 
@@ -171,11 +168,23 @@ exports.updateReviewById = async (review_id, user, body) => {
   //   }
   // });
 
-  if (review.owner !== user && body.votes) {
-    const newVotes = `votes + ${body.votes}`;
+  const usersReview = review.owner === user;
+
+  if (usersReview && votes) {
+    return Promise.reject({
+      status: 403,
+      message: "User cannot vote on own review",
+    });
+  } else if (!usersReview && votes) {
+    const newVotes = `votes + ${votes}`;
     queryStr += format(`votes = %s, `, newVotes);
-  } else if (review.owner === user && body.review_body) {
-    queryStr += format(`review_body = %L, `, body.review_body);
+  } else if (!usersReview && review_body) {
+    return Promise.reject({
+      status: 403,
+      message: "User cannot edit other user's review",
+    });
+  } else if (usersReview && review_body) {
+    queryStr += format(`review_body = %L, `, review_body);
   } else {
     return Promise.reject({ status: 400, message: "Missing required fields" });
   }
@@ -196,7 +205,7 @@ exports.removeReviewById = async (review_id, user) => {
 
   const review = await this.selectReviewById(review_id);
   if (review.owner !== user) {
-    return Promise.reject({ status: 400, message: "Invalid user" });
+    return Promise.reject({ status: 403, message: "Invalid user" });
   }
 
   return getSingleResult(

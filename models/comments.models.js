@@ -64,17 +64,9 @@ exports.insertCommentByReviewId = async (review_id, body) => {
 };
 
 exports.updateCommentById = async (comment_id, user, { votes, body }) => {
-  // let pairs = Object.entries(body).filter((pair) => {
-  //   const [, value] = pair;
-  //   return value;
-  // });
-
   if (Object.is(parseInt(comment_id), NaN)) {
     return Promise.reject({ status: 400, message: "Bad request" });
   }
-  // else if (pairs.length < 1) {
-  //   return Promise.reject({ status: 400, message: "Missing required fields" });
-  // }
 
   const comment = await getSingleResult(
     `SELECT author FROM comments
@@ -86,20 +78,22 @@ exports.updateCommentById = async (comment_id, user, { votes, body }) => {
     UPDATE comments 
     SET `;
 
-  // pairs.forEach((pair) => {
-  //   const [key, value] = pair;
-  //   if (key === "votes") {
-  //     const newVotes = `${key} + ${value}`;
-  //     queryStr += format(`votes = %s, `, newVotes);
-  //   } else {
-  //     queryStr += format(`%I = %L, `, key, value);
-  //   }
-  // });
+  const usersComment = comment.author === user;
 
-  if (comment.author !== user && votes) {
+  if (usersComment && votes) {
+    return Promise.reject({
+      status: 403,
+      message: "User cannot vote on own comment",
+    });
+  } else if (!usersComment && votes) {
     const newVotes = `votes + ${votes}`;
     queryStr += format(`votes = %s, `, newVotes);
-  } else if (comment.author === user && body) {
+  } else if (!usersComment && body) {
+    return Promise.reject({
+      status: 403,
+      message: "User cannot edit other user's comment",
+    });
+  } else if (usersComment && body) {
     queryStr += format(`body = %L, `, body);
   } else {
     return Promise.reject({ status: 400, message: "Missing required fields" });
@@ -126,7 +120,7 @@ exports.removeCommentById = async (comment_id, user) => {
   );
 
   if (comment.author !== user) {
-    return Promise.reject({ status: 400, message: "Invalid user" });
+    return Promise.reject({ status: 403, message: "Invalid user" });
   }
 
   return getSingleResult(

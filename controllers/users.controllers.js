@@ -58,16 +58,18 @@ exports.patchUserByUsername = (req, res, next) => {
   const { username } = req.params;
   const { avatar_url, name } = req.body;
 
-  username !== req.user && res.status(401).send({ message: "Invalid user" });
-
-  updateUserByUsername(username, { avatar_url, name })
-    .then((user) => {
-      res.status(200).send({ user });
-    })
-    .catch((err) => {
-      if (!err.message) err.message = "User not found";
-      next(err);
-    });
+  if (username === req.user) {
+    updateUserByUsername(username, { avatar_url, name })
+      .then((user) => {
+        res.status(200).send({ user });
+      })
+      .catch((err) => {
+        if (!err.message) err.message = "User not found";
+        next(err);
+      });
+  } else {
+    res.status(403).send({ message: "Invalid user" });
+  }
 };
 
 exports.loginUser = (req, res, next) => {

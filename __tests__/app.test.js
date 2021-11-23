@@ -330,6 +330,16 @@ describe("PATCH - /api/users/:username", () => {
       name: "John Doe",
     });
   });
+  test("should return 403 a user tries to edit another users details", async () => {
+    const {
+      body: { message },
+    } = await request
+      .patch("/api/users/mallionaire")
+      .send({ avatar_url: "https://fakeurl.com/test.png", name: "John Doe" })
+      .expect(403);
+
+    expect(message).toBe("Invalid user");
+  });
   test("should not alter any fields not included in request body", async () => {
     const {
       body: { user },
@@ -701,9 +711,9 @@ describe("PATCH - /api/reviews/:review_id", () => {
     } = await request
       .patch("/api/reviews/2")
       .send({ inc_votes: 20 })
-      .expect(400);
+      .expect(403);
 
-    expect(message).toBe("Missing required fields");
+    expect(message).toBe("User cannot vote on own review");
   });
   test("should update the review body if passed the relevant field", async () => {
     const {
@@ -721,9 +731,9 @@ describe("PATCH - /api/reviews/:review_id", () => {
     } = await request
       .patch("/api/reviews/12")
       .send({ review_body: "Test" })
-      .expect(400);
+      .expect(403);
 
-    expect(message).toBe("Missing required fields");
+    expect(message).toBe("User cannot edit other user's review");
   });
   // test("should still work when updating multiple fields at once", async () => {
   //   const {
@@ -787,7 +797,6 @@ describe("PATCH - /api/reviews/:review_id", () => {
 });
 
 describe("DELETE - /api/reviews/:review_id", () => {
-  // request.set(...setUser("philippaclaire9"));
   test("should remove the specified review and all associated comments from the database", () => {
     return request
       .delete("/api/reviews/2")
@@ -802,6 +811,13 @@ describe("DELETE - /api/reviews/:review_id", () => {
       .then(({ rows }) => {
         expect(rows).toHaveLength(0);
       });
+  });
+  test("should not remove the specified review from the database if user doesn't match review owner", async () => {
+    const {
+      body: { message },
+    } = await request.delete("/api/reviews/5").expect(403);
+
+    expect(message).toBe("Invalid user");
   });
   test("should return a 400 and custom message when passed an invalid review_id", async () => {
     const {
@@ -1022,8 +1038,8 @@ describe("PATCH - /api/comments/:comment_id", () => {
     } = await request
       .patch("/api/comments/6")
       .send({ inc_votes: 1 })
-      .expect(400);
-    expect(message).toBe("Missing required fields");
+      .expect(403);
+    expect(message).toBe("User cannot vote on own comment");
   });
   test("should update the comment body if passed the relevant field", async () => {
     const {
@@ -1041,21 +1057,10 @@ describe("PATCH - /api/comments/:comment_id", () => {
     } = await request
       .patch("/api/comments/2")
       .send({ body: "Test" })
-      .expect(400);
+      .expect(403);
 
-    expect(message).toBe("Missing required fields");
+    expect(message).toBe("User cannot edit other user's comment");
   });
-  // test("should update the comment body if passed the relevant field", async () => {
-  //   const {
-  //     body: { comment },
-  //   } = await request
-  //     .patch("/api/comments/6")
-  //     .send({ body: "Test", inc_votes: -1 })
-  //     .expect(200);
-
-  //   expect(comment.body).toBe("Test");
-  //   expect(comment.votes).toBe(9);
-  // });
   test("should return a 400 and custom message when a required input field is missing", async () => {
     const {
       body: { message },
@@ -1116,7 +1121,7 @@ describe("DELETE - /api/comments/:comment_id", () => {
   test("should not remove the specified comment from the database if user doesn't match comment author", async () => {
     const {
       body: { message },
-    } = await request.delete("/api/comments/5").expect(400);
+    } = await request.delete("/api/comments/5").expect(403);
 
     expect(message).toBe("Invalid user");
   });
