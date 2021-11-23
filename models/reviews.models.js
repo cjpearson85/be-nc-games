@@ -177,19 +177,22 @@ exports.updateReviewById = async (review_id, user, { votes, review_body }) => {
     });
   } else if (!usersReview && votes) {
     const newVotes = `votes + ${votes}`;
-    queryStr += format(`votes = %s, `, newVotes);
+    queryStr += format(`votes = %s`, newVotes);
   } else if (!usersReview && review_body) {
     return Promise.reject({
       status: 403,
       message: "User cannot edit other user's review",
     });
   } else if (usersReview && review_body) {
-    queryStr += format(`review_body = %L, `, review_body);
+    queryStr += format(
+      `review_body = %L, edited_at = %L`,
+      review_body,
+      new Date()
+    );
   } else {
     return Promise.reject({ status: 400, message: "Missing required fields" });
   }
 
-  queryStr = queryStr.slice(0, -2);
   queryStr += `
     WHERE review_id = $1
     RETURNING *;

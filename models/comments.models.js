@@ -87,19 +87,18 @@ exports.updateCommentById = async (comment_id, user, { votes, body }) => {
     });
   } else if (!usersComment && votes) {
     const newVotes = `votes + ${votes}`;
-    queryStr += format(`votes = %s, `, newVotes);
+    queryStr += format(`votes = %s`, newVotes);
   } else if (!usersComment && body) {
     return Promise.reject({
       status: 403,
       message: "User cannot edit other user's comment",
     });
   } else if (usersComment && body) {
-    queryStr += format(`body = %L, `, body);
+    queryStr += format(`body = %L, edited_at = %L`, body, new Date());
   } else {
     return Promise.reject({ status: 400, message: "Missing required fields" });
   }
 
-  queryStr = queryStr.slice(0, -2);
   queryStr += `
     WHERE comment_id = $1
     RETURNING *;

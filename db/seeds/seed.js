@@ -39,7 +39,8 @@ const seed = async (data) => {
       votes INT DEFAULT 0 NOT NULL,
       category VARCHAR(100) REFERENCES categories(slug) NOT NULL,
       owner VARCHAR(100) REFERENCES users(username) NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+      edited_at TIMESTAMP
     )`);
 
   await db.query(`
@@ -49,6 +50,7 @@ const seed = async (data) => {
       review_id INT REFERENCES reviews(review_id) ON DELETE CASCADE NOT NULL,
       votes INT DEFAULT 0 NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+      edited_at TIMESTAMP,
       body TEXT
     )`);
 

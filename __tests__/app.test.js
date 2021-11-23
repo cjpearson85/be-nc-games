@@ -723,7 +723,19 @@ describe("PATCH - /api/reviews/:review_id", () => {
       .send({ review_body: "Test" })
       .expect(200);
 
-    expect(review.review_body).toBe("Test");
+    expect(review).toMatchObject({
+      owner: "philippaclaire9",
+      title: "Jenga",
+      review_id: 2,
+      review_body: "Test",
+      designer: "Leslie Scott",
+      review_img_url:
+        "https://www.golenbock.com/wp-content/uploads/2015/01/placeholder-user.png",
+      category: "dexterity",
+      created_at: "2021-01-18T10:01:41.251Z",
+      edited_at: expect.any(String),
+      votes: 5,
+    });
   });
   test("only the owner of the review should be able to edit fields other than votes", async () => {
     const {
@@ -1049,7 +1061,15 @@ describe("PATCH - /api/comments/:comment_id", () => {
       .send({ body: "Test" })
       .expect(200);
 
-    expect(comment.body).toBe("Test");
+    expect(comment).toMatchObject({
+      comment_id: 6,
+      author: "philippaclaire9",
+      review_id: 3,
+      votes: 10,
+      created_at: expect.any(String),
+      edited_at: expect.any(String),
+      body: "Test",
+    });
   });
   test("only the author of the comment should be able to edit fields other than votes", async () => {
     const {
