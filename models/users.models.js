@@ -54,7 +54,7 @@ exports.selectUserByUsername = async (username) => {
 
 exports.checkUserCredentials = async (username) => {
   queryStr = `
-    SELECT username, password
+    SELECT *
     FROM users
     WHERE username = $1;
   `;

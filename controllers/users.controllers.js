@@ -83,7 +83,8 @@ exports.loginUser = (req, res, next) => {
           { user: user.username, iat: Date.now() },
           process.env.JWT_SECRET
         );
-        res.status(200).send({ token });
+        delete user.password;
+        res.status(200).send({ user, token });
       } else {
         res.status(401).send({ message: "invalid username or password" });
       }
