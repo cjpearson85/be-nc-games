@@ -8,7 +8,8 @@
     "seed": "node ./db/seeds/run-seed.js",
     "test": "jest",
     "start": "node listen.js",
-    "seed:prod": "NODE_ENV=production DATABASE_URL=$(heroku config:get DATABASE_URL) npm run seed"
+    "seed:prod": "NODE_ENV=production DATABASE_URL=$(heroku config:get DATABASE_URL) npm run seed",
+    "dev": "nodemon listen.js"
   },
   "repository": {
     "type": "git",
@@ -33,6 +34,7 @@
   "devDependencies": {
     "jest": "^27.0.6",
     "jest-sorted": "^1.0.12",
+    "nodemon": "^2.0.15",
     "superagent-defaults": "^0.1.14",
     "supertest": "^6.1.4"
   },
