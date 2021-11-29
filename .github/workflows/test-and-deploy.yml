@@ -18,15 +18,15 @@ jobs:
       - name: Use PostgreSQL
         uses: harmon758/postgresql-action@v1
         with:
-          postgresql db: 'my_db'
-          postgresql user: 'test_user'
-          postgresql password: 'test_password'
+          postgresql db: "my_db"
+          postgresql user: "test_user"
+          postgresql password: "test_password"
 
       - name: Install dependencies
         run: npm ci
 
       - name: Run tests
-        run: PGDATABASE=my_db PGUSER=test_user PGPASSWORD=test_password npm t
+        run: PGDATABASE=my_db PGUSER=test_user PGPASSWORD=test_password JWT_SECRET=${{ secrets.JWT_SECRET }} npm t
 
   deploy:
     name: Deploy

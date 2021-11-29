@@ -7,9 +7,6 @@ const seed = require("../db/seeds/seed.js");
 
 beforeEach(async () => {
   await seed(testData);
-});
-
-beforeAll(async () => {
   const {
     body: { token },
   } = await request
