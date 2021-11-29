@@ -4,6 +4,7 @@ const { insertToTable } = require("../db/utils/sql-queries.js");
 const {
   getSingleResult,
   getMultipleResults,
+  hashPassword,
 } = require("../helper-functions.js");
 
 exports.selectUsers = async ({ sort_by, order, limit, p }) => {
@@ -51,12 +52,24 @@ exports.selectUserByUsername = async (username) => {
   return getSingleResult(queryStr, [username]);
 };
 
+exports.checkUserCredentials = async (username) => {
+  queryStr = `
+    SELECT *
+    FROM users
+    WHERE username = $1;
+  `;
+
+  return getSingleResult(queryStr, [username]);
+};
+
 exports.insertUser = async (body) => {
   const columns = Object.keys(body);
   const values = Object.values(body);
 
+  if (values[3]) values[3] = await hashPassword(values[3]);
+
   let queryStr = insertToTable("users", columns, [values]);
-  queryStr += ` RETURNING *`;
+  queryStr += ` RETURNING username, name, avatar_url`;
 
   return getSingleResult(queryStr);
 };

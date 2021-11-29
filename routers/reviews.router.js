@@ -9,23 +9,21 @@ const {
   postReview,
   deleteReviewById,
 } = require("../controllers/reviews.controllers");
+const { authoriseUser } = require("../controllers/users.controllers");
 
 const reviewsRouter = require("express").Router();
 
-reviewsRouter
-  .route("/")
-  .get(getReviews)
-  .post(postReview);
+reviewsRouter.get("/", getReviews);
+reviewsRouter.get("/:review_id", getReviewById);
+reviewsRouter.get("/:review_id/comments", getCommentsByReviewId);
 
+reviewsRouter.use(authoriseUser);
+
+reviewsRouter.post("/", postReview);
 reviewsRouter
   .route("/:review_id")
-  .get(getReviewById)
   .patch(patchReviewById)
   .delete(deleteReviewById);
-  
-reviewsRouter
-  .route("/:review_id/comments")
-  .get(getCommentsByReviewId)
-  .post(postCommentByReviewId);
+reviewsRouter.post("/:review_id/comments", postCommentByReviewId);
 
 module.exports = reviewsRouter;

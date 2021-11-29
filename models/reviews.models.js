@@ -36,7 +36,7 @@ exports.selectReviews = async ({
     category !== undefined
   ) {
     return Promise.reject({ status: 404, message: "Category not found" });
-  } 
+  }
 
   let queryValues = [];
   let queryStr = `
@@ -52,8 +52,8 @@ exports.selectReviews = async ({
     queryStr += ` WHERE category = $${queryCount}`;
     queryValues.push(category);
     queryCount++;
-  } 
-  
+  }
+
   if (title) {
     const titleInsert = `%${title}%`;
     if (queryCount === 1) {
@@ -139,33 +139,48 @@ exports.selectReviewById = async (review_id) => {
   return getSingleResult(queryStr, [review_id]);
 };
 
-exports.updateReviewById = async (review_id, body) => {
+exports.updateReviewById = async (review_id, user, body) => {
   let pairs = Object.entries(body).filter((pair) => {
     const [, value] = pair;
     return value;
   });
-  
+
   if (Object.is(parseInt(review_id), NaN)) {
     return Promise.reject({ status: 400, message: "Bad request" });
-  } else if (pairs.length < 1) {
-    return Promise.reject({ status: 400, message: "Missing required fields" });
   }
+
+  const review = await this.selectReviewById(review_id);
 
   let queryStr = `
     UPDATE reviews 
     SET `;
 
-  pairs.forEach((pair) => {
-    const [key, value] = pair;
-    if (key === 'votes') {
-      const newVotes = `${key} + ${value}`
-      queryStr += format(`votes = %s, `, newVotes);
-    } else {
-      queryStr += format(`%I = %L, `, key, value);
-    }
-  });
+  const usersReview = review.owner === user;
+  const { votes } = body;
 
-  queryStr = queryStr.slice(0, -2);
+  if (usersReview && votes) {
+    return Promise.reject({
+      status: 403,
+      message: "User cannot vote on own review",
+    });
+  } else if (!usersReview && votes) {
+    const newVotes = `votes + ${votes}`;
+    queryStr += format(`votes = %s`, newVotes);
+  } else if (!usersReview && pairs.length) {
+    return Promise.reject({
+      status: 403,
+      message: "User cannot edit other user's review",
+    });
+  } else if (usersReview && pairs.length) {
+    pairs.forEach((pair) => {
+      const [key, value] = pair;
+      queryStr += format(`%I = %L, `, key, value);
+    });
+    queryStr += format(`edited_at = %L`, new Date());
+  } else {
+    return Promise.reject({ status: 400, message: "Missing required fields" });
+  }
+
   queryStr += `
     WHERE review_id = $1
     RETURNING *;
@@ -174,16 +189,22 @@ exports.updateReviewById = async (review_id, body) => {
   return getSingleResult(queryStr, [review_id]);
 };
 
-exports.removeReviewById = async (review_id) => {
+exports.removeReviewById = async (review_id, user) => {
   if (Object.is(parseInt(review_id), NaN)) {
     return Promise.reject({ status: 400, message: "Bad request" });
+  }
+
+  const review = await this.selectReviewById(review_id);
+  if (review.owner !== user) {
+    return Promise.reject({ status: 403, message: "Invalid user" });
   }
 
   return getSingleResult(
     `
     DELETE FROM reviews
     WHERE review_id = $1
-    RETURNING review_id;`,
+    RETURNING review_id;
+    `,
     [review_id]
   );
 };

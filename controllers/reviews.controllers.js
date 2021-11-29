@@ -7,7 +7,8 @@ const {
 } = require("../models/reviews.models");
 
 exports.getReviews = (req, res, next) => {
-  const { sort_by, order, category, title, owner, created_at, limit, p } = req.query;
+  const { sort_by, order, category, title, owner, created_at, limit, p } =
+    req.query;
   const queries = {
     sort_by: sort_by || "created_at",
     order: order || "desc",
@@ -27,9 +28,17 @@ exports.getReviews = (req, res, next) => {
 };
 
 exports.postReview = (req, res, next) => {
-  const { owner, title, review_img_url, review_body, designer, category } = req.body;
+  const owner = req.user;
+  const { title, review_img_url, review_body, designer, category } = req.body;
 
-  insertReview({ owner, title, review_img_url, review_body, designer, category })
+  insertReview({
+    owner,
+    title,
+    review_img_url,
+    review_body,
+    designer,
+    category,
+  })
     .then((review) => {
       res.status(201).send({ review });
     })
@@ -49,10 +58,25 @@ exports.getReviewById = (req, res, next) => {
 };
 
 exports.patchReviewById = (req, res, next) => {
+  const user = req.user;
   const { review_id } = req.params;
-  const { review_body, inc_votes: votes } = req.body;
+  const {
+    title,
+    review_img_url,
+    review_body,
+    designer,
+    category,
+    inc_votes: votes,
+  } = req.body;
 
-  updateReviewById(review_id, { review_body, votes })
+  updateReviewById(review_id, user, {
+    title,
+    review_img_url,
+    review_body,
+    designer,
+    category,
+    votes,
+  })
     .then((review) => {
       res.status(200).send({ review });
     })
@@ -63,8 +87,10 @@ exports.patchReviewById = (req, res, next) => {
 };
 
 exports.deleteReviewById = (req, res, next) => {
+  const user = req.user;
   const { review_id } = req.params;
-  removeReviewById(review_id)
+
+  removeReviewById(review_id, user)
     .then(() => {
       res.status(204).send();
     })

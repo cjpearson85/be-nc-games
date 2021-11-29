@@ -3,6 +3,7 @@ const {
   createRef,
   commentsFormatter,
   valuesFormatter,
+  usersFormatter,
 } = require("../utils/data-manipulation.js");
 const { insertToTable } = require("../utils/sql-queries.js");
 
@@ -23,8 +24,9 @@ const seed = async (data) => {
   await db.query(`
     CREATE TABLE users (
       username VARCHAR(100) PRIMARY KEY NOT NULL,
-      avatar_url TEXT DEFAULT 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png' NOT NULL,
-      name VARCHAR(100) NOT NULL
+      name VARCHAR(100) NOT NULL,
+      password VARCHAR(100) NOT NULL,
+      avatar_url TEXT DEFAULT 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png' NOT NULL
     )`);
 
   await db.query(`
@@ -37,7 +39,8 @@ const seed = async (data) => {
       votes INT DEFAULT 0 NOT NULL,
       category VARCHAR(100) REFERENCES categories(slug) NOT NULL,
       owner VARCHAR(100) REFERENCES users(username) NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+      edited_at TIMESTAMP
     )`);
 
   await db.query(`
@@ -47,6 +50,7 @@ const seed = async (data) => {
       review_id INT REFERENCES reviews(review_id) ON DELETE CASCADE NOT NULL,
       votes INT DEFAULT 0 NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+      edited_at TIMESTAMP,
       body TEXT
     )`);
 
@@ -59,8 +63,8 @@ const seed = async (data) => {
   await db.query(categoriesQuery);
 
   table = "users";
-  columns = ["username", "avatar_url", "name"];
-  values = valuesFormatter(userData, columns);
+  columns = ["username", "avatar_url", "name", "password"];
+  values = await usersFormatter(userData, columns);
 
   const usersQuery = insertToTable(table, columns, values);
 
@@ -87,7 +91,7 @@ const seed = async (data) => {
   const reviewRefObj = createRef(rows, "title", "review_id");
 
   table = "comments";
-  columns = ['author', 'review_id', 'votes', 'created_at', 'body'];
+  columns = ["author", "review_id", "votes", "created_at", "body"];
   values = commentsFormatter(commentData, reviewRefObj);
 
   const commentsQuery = insertToTable(table, columns, values);

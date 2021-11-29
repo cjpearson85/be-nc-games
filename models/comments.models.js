@@ -8,7 +8,7 @@ exports.selectCommentsByReviewId = async (review_id, queries) => {
   const queryValues = [review_id];
 
   const result = await db.query(`SELECT review_id FROM reviews;`);
-  const validIDs = result.rows.map(id => id.review_id);
+  const validIDs = result.rows.map((id) => id.review_id);
 
   if (Object.is(parseInt(review_id), NaN)) {
     return Promise.reject({ status: 400, message: "Bad request" });
@@ -18,12 +18,7 @@ exports.selectCommentsByReviewId = async (review_id, queries) => {
     return Promise.reject({ status: 404, message: "Review not found" });
   }
 
-  const validSortBy = [
-    "comment_id",
-    "author",
-    "created_at",
-    "votes"
-  ];
+  const validSortBy = ["comment_id", "author", "created_at", "votes"];
   const validOrder = ["asc", "desc"];
 
   if (!validSortBy.includes(sort_by) || !validOrder.includes(order)) {
@@ -37,7 +32,7 @@ exports.selectCommentsByReviewId = async (review_id, queries) => {
     ORDER BY ${sort_by} ${order}`;
 
   const { rowCount } = await db.query(queryStr, queryValues);
-  
+
   queryStr += ` LIMIT $2 OFFSET $3;`;
 
   const offset = (p - 1) * limit;
@@ -54,7 +49,7 @@ exports.insertCommentByReviewId = async (review_id, body) => {
   const columns = Object.keys(body);
   const values = Object.values(body);
 
-  if (values.some(el => el === undefined)) {
+  if (values.some((el) => el === undefined)) {
     return Promise.reject({ status: 400, message: "Missing required fields" });
   }
 
@@ -68,51 +63,70 @@ exports.insertCommentByReviewId = async (review_id, body) => {
   return getSingleResult(queryStr);
 };
 
-exports.removeCommentById = async (comment_id) => {
+exports.updateCommentById = async (comment_id, user, { votes, body }) => {
   if (Object.is(parseInt(comment_id), NaN)) {
     return Promise.reject({ status: 400, message: "Bad request" });
   }
 
-  return getSingleResult(`
-    DELETE FROM comments
-    WHERE comment_id = $1
-    RETURNING comment_id;`,
+  const comment = await getSingleResult(
+    `SELECT author FROM comments
+    WHERE comment_id = $1;`,
     [comment_id]
   );
-};
-
-exports.updateCommentById = async (comment_id, body) => {
-  let pairs = Object.entries(body).filter((pair) => {
-    const [, value] = pair;
-    return value;
-  });
-
-  if (Object.is(parseInt(comment_id), NaN)) {
-    return Promise.reject({ status: 400, message: "Bad request" });
-  } else if (pairs.length < 1) {
-    return Promise.reject({ status: 400, message: "Missing required fields" });
-  }
 
   let queryStr = `
     UPDATE comments 
     SET `;
 
-  pairs.forEach((pair) => {
-    const [key, value] = pair;
-    if (key === 'votes') {
-      const newVotes = `${key} + ${value}`
-      queryStr += format(`votes = %s, `, newVotes);
-    } else {
-      queryStr += format(`%I = %L, `, key, value);
-    }
-  });
+  const usersComment = comment.author === user;
 
-  queryStr = queryStr.slice(0, -2);
+  if (usersComment && votes) {
+    return Promise.reject({
+      status: 403,
+      message: "User cannot vote on own comment",
+    });
+  } else if (!usersComment && votes) {
+    const newVotes = `votes + ${votes}`;
+    queryStr += format(`votes = %s`, newVotes);
+  } else if (!usersComment && body) {
+    return Promise.reject({
+      status: 403,
+      message: "User cannot edit other user's comment",
+    });
+  } else if (usersComment && body) {
+    queryStr += format(`body = %L, edited_at = %L`, body, new Date());
+  } else {
+    return Promise.reject({ status: 400, message: "Missing required fields" });
+  }
+
   queryStr += `
     WHERE comment_id = $1
     RETURNING *;
   `;
 
-  return getSingleResult(queryStr, [comment_id])
+  return getSingleResult(queryStr, [comment_id]);
+};
 
+exports.removeCommentById = async (comment_id, user) => {
+  if (Object.is(parseInt(comment_id), NaN)) {
+    return Promise.reject({ status: 400, message: "Bad request" });
+  }
+
+  const comment = await getSingleResult(
+    `SELECT author FROM comments
+    WHERE comment_id = $1;`,
+    [comment_id]
+  );
+
+  if (comment.author !== user) {
+    return Promise.reject({ status: 403, message: "Invalid user" });
+  }
+
+  return getSingleResult(
+    `
+    DELETE FROM comments
+    WHERE comment_id = $1
+    RETURNING comment_id;`,
+    [comment_id]
+  );
 };

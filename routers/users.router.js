@@ -1,8 +1,16 @@
-const { getUsers, getUserByUsername, postUser, patchUserByUsername } = require("../controllers/users.controllers");
+const {
+  getUsers,
+  getUserByUsername,
+  patchUserByUsername,
+  authoriseUser,
+} = require("../controllers/users.controllers");
 
 const usersRouter = require("express").Router();
 
-usersRouter.route('/').get(getUsers).post(postUser);
-usersRouter.route('/:username').get(getUserByUsername).patch(patchUserByUsername);
+usersRouter.get("/", getUsers);
+usersRouter.get("/:username", getUserByUsername);
+
+usersRouter.use(authoriseUser);
+usersRouter.patch("/:username", patchUserByUsername);
 
 module.exports = usersRouter;
